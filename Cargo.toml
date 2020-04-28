@@ -1,0 +1,20 @@
+[package]
+name = "sarc-rs"
+version = "0.0.1"
+authors = ["Mario Reder <mreder1289@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+num_enum = "0.4"
+
+[dev-dependencies]
+test-case = "1.0"
+
+[profile]
+[profile.dev]
+opt-level = 1
+
+[profile.release]
+debug = false
+lto = true
+codegen-units = 1

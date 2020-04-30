@@ -8,9 +8,14 @@ edition = "2018"
 
 [dependencies]
 num_enum = "0.4"
+tar = { version = "0.4", optional = true }
 
 [dev-dependencies]
 test-case = "1.0"
+
+[features]
+default = []
+tar_sarc = ["tar"]
 
 [profile]
 [profile.dev]

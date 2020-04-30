@@ -8,6 +8,10 @@ pub enum SarcError {
     ByteOrderInvalid,
     MagicInvalid,
     Utf8,
+    #[cfg(feature = "tar")]
+    TarAppend,
+    #[cfg(feature = "tar")]
+    IoError(std::io::Error),
 }
 
 impl From<TryFromPrimitiveError<ByteOrder>> for SarcError {
@@ -19,5 +23,11 @@ impl From<TryFromPrimitiveError<ByteOrder>> for SarcError {
 impl From<FromUtf8Error> for SarcError {
     fn from(_: FromUtf8Error) -> Self {
         Self::Utf8
+    }
+}
+
+impl From<std::io::Error> for SarcError {
+    fn from(err: std::io::Error) -> Self {
+        Self::IoError(err)
     }
 }

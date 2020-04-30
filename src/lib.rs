@@ -8,6 +8,9 @@ use error::*;
 use num_enum::TryFromPrimitive;
 use std::{convert::TryFrom, str};
 
+#[cfg(feature = "tar")]
+use std::io::Cursor;
+
 pub type Error = SarcError;
 
 #[derive(Debug)]
@@ -56,6 +59,31 @@ impl<'a> SfatNode<'a> {
 pub enum ByteOrder {
     BigEndian = 0xfeff,
     LittleEndian = 0xfffe,
+}
+
+impl<'a> Sarc<'a> {
+    #[cfg(feature = "tar")]
+    pub fn into_tar(self) -> Result<Cursor<Vec<u8>>, Error> {
+        let res = vec![];
+        let cursor = Cursor::new(res);
+        let mut builder = tar::Builder::new(cursor);
+
+        self.sfat_nodes
+            .into_iter()
+            .map(|node| -> Result<(), Error> {
+                if let Some(name) = node.name {
+                    let mut header = tar::Header::new_gnu();
+                    header.set_size(node.data.len() as u64);
+                    builder.append_data(&mut header, name, node.data)?;
+                }
+                Ok(())
+            })
+            .collect::<Result<(), Error>>()?;
+        // builder.append_path("file1.txt").unwrap();
+        // a.append_file("file2.txt", &mut File::open("file3.txt").unwrap()).unwrap();
+        builder.finish()?;
+        Ok(builder.into_inner()?)
+    }
 }
 
 pub fn read_sarc(sarc_file: &[u8]) -> Result<Sarc, Error> {
@@ -148,5 +176,19 @@ mod tests {
         let sarc_file = read_sarc(sarc_file);
 
         assert!(sarc_file.is_ok());
+    }
+
+    #[cfg(feature = "tar")]
+    #[test_case(M1_MODEL_PACK, "M1_Model.tar"; "with M1 Model Pack")]
+    #[test_case(M3_MODEL_PACK, "M3_Model.tar"; "with M3 Model Pack")]
+    #[test_case(MW_MODEL_PACK, "MW_Model.tar"; "with MW Model Pack")]
+    fn test_into_tar(sarc_file: &[u8], file_name: &str) -> Result<(), Error> {
+        let sarc_file = read_sarc(sarc_file)?;
+        let tar = sarc_file.into_tar()?;
+
+        // use std::io::Write;
+        // let mut file = std::fs::File::create(file_name)?;
+        // file.write_all(&tar.into_inner()[..])?;
+        Ok(())
     }
 }

@@ -1,5 +1,5 @@
 [package]
-name = "sarc-rs"
+name = "sarc"
 version = "0.0.1"
 authors = ["Mario Reder <mreder1289@gmail.com>"]
 edition = "2018"

@@ -1,7 +1,9 @@
 [package]
 name = "sarc"
 version = "0.0.1"
+description = "Reads SARC files. A commonly used Nintendo file format."
 authors = ["Mario Reder <mreder1289@gmail.com>"]
+license = "MIT/Apache-2"
 edition = "2018"
 
 [dependencies]

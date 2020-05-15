@@ -1,17 +1,17 @@
 use super::*;
 
 use num_enum::TryFromPrimitiveError;
-use std::string::FromUtf8Error;
+use std::{str::Utf8Error, string::FromUtf8Error};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub enum SarcError {
+pub enum SarcError<'a> {
     #[error("Byte order invalid")]
     ByteOrderInvalid,
-    #[error("Magic number invalid. This is not a SARC file")]
-    MagicInvalid,
+    #[error("Magic number invalid: {0:?}. This is not a SARC file")]
+    MagicInvalid(&'a [u8]),
     #[error("UTF8 encoding error: {0}")]
-    Utf8(FromUtf8Error),
+    Utf8(Utf8Error),
     #[cfg(feature = "tar_sarc")]
     #[error("Byte order invalid")]
     TarAppend,
@@ -23,20 +23,26 @@ pub enum SarcError {
     ZstdError(String),
 }
 
-impl From<TryFromPrimitiveError<ByteOrder>> for SarcError {
+impl<'a> From<TryFromPrimitiveError<ByteOrder>> for SarcError<'a> {
     fn from(_: TryFromPrimitiveError<ByteOrder>) -> Self {
         Self::ByteOrderInvalid
     }
 }
 
-impl From<FromUtf8Error> for SarcError {
+impl<'a> From<FromUtf8Error> for SarcError<'a> {
     fn from(err: FromUtf8Error) -> Self {
+        Self::Utf8(err.utf8_error())
+    }
+}
+
+impl<'a> From<Utf8Error> for SarcError<'a> {
+    fn from(err: Utf8Error) -> Self {
         Self::Utf8(err)
     }
 }
 
 #[cfg(feature = "tar_sarc")]
-impl From<std::io::Error> for SarcError {
+impl<'a> From<std::io::Error> for SarcError<'a> {
     fn from(err: std::io::Error) -> Self {
         Self::IoError(err)
     }

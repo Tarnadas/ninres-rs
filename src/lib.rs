@@ -15,7 +15,7 @@ use std::{convert::TryFrom, str};
 #[cfg(feature = "tar_sarc")]
 use std::io::Cursor;
 
-pub type Error = SarcError;
+pub type Error<'a> = SarcError<'a>;
 
 #[derive(Debug)]
 pub struct Sarc<'a> {
@@ -69,7 +69,7 @@ pub enum ByteOrder {
 
 impl<'a> Sarc<'a> {
     #[cfg(feature = "tar_sarc")]
-    pub fn into_tar(self) -> Result<Cursor<Vec<u8>>, Error> {
+    pub fn into_tar(self) -> Result<Cursor<Vec<u8>>, Error<'a>> {
         let res = vec![];
         let cursor = Cursor::new(res);
         let mut builder = tar::Builder::new(cursor);
@@ -101,7 +101,10 @@ impl<'a> Sarc<'a> {
     }
 }
 
-pub fn read_sarc(sarc_file: &[u8]) -> Result<Sarc, Error> {
+pub fn read_sarc<'a>(sarc_file: &'a [u8]) -> Result<Sarc, Error> {
+    if "SARC" != str::from_utf8(&sarc_file[..4])? {
+        return Err(SarcError::MagicInvalid(&sarc_file[..4]));
+    }
     let byte_order = ByteOrder::try_from(read_u16(sarc_file, 0x6, ByteOrder::BigEndian))?;
     let file_size = read_u32(sarc_file, 0x8, byte_order);
     let data_offset = read_u32(sarc_file, 0xC, byte_order);
@@ -210,7 +213,7 @@ mod tests {
     #[test_case(M1_MODEL_PACK, "M1_Model.tar"; "with M1 Model Pack")]
     #[test_case(M3_MODEL_PACK, "M3_Model.tar"; "with M3 Model Pack")]
     #[test_case(MW_MODEL_PACK, "MW_Model.tar"; "with MW Model Pack")]
-    fn test_into_tar(sarc_file: &[u8], file_name: &str) -> Result<(), Error> {
+    fn test_into_tar<'a>(sarc_file: &'a [u8], file_name: &str) -> Result<(), Error<'a>> {
         let sarc_file = read_sarc(sarc_file)?;
         let tar = sarc_file.into_tar()?;
 

@@ -2,13 +2,17 @@
 //!
 //! See http://mk8.tockdom.com/wiki/SARC_(File_Format)
 
+#[cfg(feature = "zstd")]
+#[macro_use]
+extern crate cfg_if;
+
 mod error;
 
 use error::*;
 use num_enum::TryFromPrimitive;
 use std::{convert::TryFrom, str};
 
-#[cfg(feature = "tar")]
+#[cfg(feature = "tar_sarc")]
 use std::io::Cursor;
 
 pub type Error = SarcError;
@@ -42,6 +46,8 @@ pub struct SfatNode<'a> {
     data_start_offset: u32,
     data_end_offset: u32,
     data: &'a [u8],
+    #[cfg(feature = "zstd")]
+    data_deflated: Option<Vec<u8>>,
 }
 
 impl<'a> SfatNode<'a> {
@@ -62,7 +68,7 @@ pub enum ByteOrder {
 }
 
 impl<'a> Sarc<'a> {
-    #[cfg(feature = "tar")]
+    #[cfg(feature = "tar_sarc")]
     pub fn into_tar(self) -> Result<Cursor<Vec<u8>>, Error> {
         let res = vec![];
         let cursor = Cursor::new(res);
@@ -74,13 +80,22 @@ impl<'a> Sarc<'a> {
                 if let Some(name) = node.name {
                     let mut header = tar::Header::new_gnu();
                     header.set_size(node.data.len() as u64);
-                    builder.append_data(&mut header, name, node.data)?;
+                    cfg_if! {
+                        if #[cfg(feature = "zstd")] {
+                            builder.append_data(&mut header, name.clone(), node.data)?;
+                            if let Some(data_deflated) = node.data_deflated {
+                                let mut header = tar::Header::new_gnu();
+                                header.set_size(data_deflated.len() as u64);
+                                builder.append_data(&mut header, format!("{}.tar", name), &data_deflated[..])?;
+                            }
+                        } else {
+                            builder.append_data(&mut header, name, node.data)?;
+                        }
+                    }
                 }
                 Ok(())
             })
             .collect::<Result<(), Error>>()?;
-        // builder.append_path("file1.txt").unwrap();
-        // a.append_file("file2.txt", &mut File::open("file3.txt").unwrap()).unwrap();
         builder.finish()?;
         Ok(builder.into_inner()?)
     }
@@ -125,6 +140,19 @@ pub fn read_sarc(sarc_file: &[u8]) -> Result<Sarc, Error> {
             data_start_offset,
             data_end_offset,
             data,
+            #[cfg(feature = "ruzstd")]
+            data_deflated: if b"\x28\xB5\x2F\xFD" == &data[..4] {
+                use std::io::Read;
+                let mut decompressed = vec![];
+                let mut cursor = Cursor::new(data);
+                let mut decoder =
+                    ruzstd::StreamingDecoder::new(&mut cursor).map_err(|_| Error::ZstdError)?;
+
+                decoder.read_to_end(&mut decompressed).unwrap();
+                Some(decompressed)
+            } else {
+                None
+            },
         })
     }
     Ok(Sarc {

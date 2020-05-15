@@ -7,7 +7,9 @@ license = "MIT/Apache-2"
 edition = "2018"
 
 [dependencies]
+cfg-if = { version = "0.1", optional = true }
 num_enum = "0.4"
+ruzstd = { version = "0.2", optional = true }
 tar = { version = "0.4", optional = true }
 
 [dev-dependencies]
@@ -16,6 +18,7 @@ test-case = "1.0"
 [features]
 default = []
 tar_sarc = ["tar"]
+zstd = ["ruzstd", "cfg-if"]
 
 [profile]
 [profile.dev]

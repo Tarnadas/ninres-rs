@@ -1,6 +1,4 @@
 {
   "editor.formatOnSave": true,
-  "rust-analyzer.checkOnSave.extraArgs": [
-    "--features=tar_sarc"
-  ]
+  "rust-analyzer.checkOnSave.extraArgs": ["--features=tar_sarc,zstd"]
 }

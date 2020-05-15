@@ -2,18 +2,25 @@ use super::*;
 
 use num_enum::TryFromPrimitiveError;
 use std::string::FromUtf8Error;
+use thiserror::Error;
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum SarcError {
+    #[error("Byte order invalid")]
     ByteOrderInvalid,
+    #[error("Magic number invalid. This is not a SARC file")]
     MagicInvalid,
-    Utf8,
+    #[error("UTF8 encoding error: {0}")]
+    Utf8(FromUtf8Error),
     #[cfg(feature = "tar_sarc")]
+    #[error("Byte order invalid")]
     TarAppend,
     #[cfg(feature = "tar_sarc")]
+    #[error("IO error: {0}")]
     IoError(std::io::Error),
     #[cfg(feature = "zstd")]
-    ZstdError,
+    #[error("ZSTD error: {0}")]
+    ZstdError(String),
 }
 
 impl From<TryFromPrimitiveError<ByteOrder>> for SarcError {
@@ -23,8 +30,8 @@ impl From<TryFromPrimitiveError<ByteOrder>> for SarcError {
 }
 
 impl From<FromUtf8Error> for SarcError {
-    fn from(_: FromUtf8Error) -> Self {
-        Self::Utf8
+    fn from(err: FromUtf8Error) -> Self {
+        Self::Utf8(err)
     }
 }
 

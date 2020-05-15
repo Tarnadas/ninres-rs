@@ -145,8 +145,8 @@ pub fn read_sarc(sarc_file: &[u8]) -> Result<Sarc, Error> {
                 use std::io::Read;
                 let mut decompressed = vec![];
                 let mut cursor = Cursor::new(data);
-                let mut decoder =
-                    ruzstd::StreamingDecoder::new(&mut cursor).map_err(|_| Error::ZstdError)?;
+                let mut decoder = ruzstd::StreamingDecoder::new(&mut cursor)
+                    .map_err(|err| Error::ZstdError(err))?;
 
                 decoder.read_to_end(&mut decompressed).unwrap();
                 Some(decompressed)

@@ -1,7 +1,7 @@
 [package]
-name = "sarc"
+name = "ninres"
 version = "0.0.1"
-description = "Reads SARC files. A commonly used Nintendo file format."
+description = "Read commonly used Nintendo file formats."
 authors = ["Mario Reder <mreder1289@gmail.com>"]
 license = "MIT/Apache-2"
 edition = "2018"
@@ -18,6 +18,7 @@ test-case = "1.0"
 
 [features]
 default = []
+sarc = []
 tar_sarc = ["tar"]
 zstd = ["ruzstd", "cfg-if"]
 

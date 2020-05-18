@@ -53,6 +53,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "99e85c08494b21a9054e7fe1374a732aeadaff3980b6990b94bfd3a70f690005"
 
 [[package]]
+name = "ninres"
+version = "0.0.1"
+dependencies = [
+ "cfg-if",
+ "num_enum",
+ "ruzstd",
+ "tar",
+ "test-case",
+ "thiserror",
+]
+
+[[package]]
 name = "num_enum"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -162,18 +174,6 @@ checksum = "e6ad6545e2fafab6362557ad738c80ff7460f71b118cd8bdf837f973a98a2803"
 dependencies = [
  "byteorder",
  "twox-hash",
-]
-
-[[package]]
-name = "sarc"
-version = "0.0.1"
-dependencies = [
- "cfg-if",
- "num_enum",
- "ruzstd",
- "tar",
- "test-case",
- "thiserror",
 ]
 
 [[package]]

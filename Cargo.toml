@@ -18,8 +18,9 @@ test-case = "1.0"
 
 [features]
 default = []
+bfres = []
 sarc = []
-tar_sarc = ["tar"]
+tar_ninres = ["tar"]
 zstd = ["ruzstd", "cfg-if"]
 
 [profile]

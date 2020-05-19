@@ -39,7 +39,7 @@ pub struct SfatNode {
     pub data_end_offset: u32,
     pub data: Vec<u8>,
     #[cfg(feature = "zstd")]
-    pub data_deflated: Option<Vec<u8>>,
+    pub data_decompressed: Option<Vec<u8>>,
 }
 
 impl SfatNode {
@@ -93,7 +93,7 @@ impl Sarc {
                 data_end_offset,
                 data: data.to_vec(),
                 #[cfg(feature = "ruzstd")]
-                data_deflated: if b"\x28\xB5\x2F\xFD" == &data[..4] {
+                data_decompressed: if b"\x28\xB5\x2F\xFD" == &data[..4] {
                     use std::io::Read;
                     let mut decompressed = vec![];
                     let mut cursor = Cursor::new(data);
@@ -120,7 +120,7 @@ impl Sarc {
     }
 
     #[cfg(feature = "tar_ninres")]
-    pub fn into_tar(self) -> Result<Cursor<Vec<u8>>, Error> {
+    pub fn into_tar(self, mode: u32) -> Result<Cursor<Vec<u8>>, Error> {
         let res = vec![];
         let cursor = Cursor::new(res);
         let mut builder = tar::Builder::new(cursor);
@@ -131,16 +131,17 @@ impl Sarc {
                 if let Some(name) = node.name {
                     let mut header = tar::Header::new_gnu();
                     header.set_size(node.data.len() as u64);
+                    header.set_mode(mode);
                     cfg_if! {
                         if #[cfg(feature = "zstd")] {
                             builder.append_data(&mut header, name.clone(), &node.data[..])?;
-                            if let Some(data_deflated) = node.data_deflated {
+                            if let Some(data_deflated) = node.data_decompressed {
                                 let mut header = tar::Header::new_gnu();
                                 header.set_size(data_deflated.len() as u64);
                                 builder.append_data(&mut header, format!("{}.tar", name), &data_deflated[..])?;
                             }
                         } else {
-                            builder.append_data(&mut header, name, node.data)?;
+                            builder.append_data(&mut header, name, &node.data[..])?;
                         }
                     }
                 }
@@ -197,11 +198,11 @@ mod tests {
     #[test_case(MW_MODEL_PACK, "MW_Model.tar"; "with MW Model Pack")]
     fn test_into_tar<'a>(sarc_file: &'a [u8], file_name: &str) -> Result<(), Error> {
         let sarc_file = Sarc::new(sarc_file)?;
-        let tar = sarc_file.into_tar()?;
+        let tar = sarc_file.into_tar(0o644)?;
 
-        // use std::io::Write;
-        // let mut file = std::fs::File::create(file_name)?;
-        // file.write_all(&tar.into_inner()[..])?;
+        use std::io::Write;
+        let mut file = std::fs::File::create(file_name)?;
+        file.write_all(&tar.into_inner()[..])?;
         Ok(())
     }
 }

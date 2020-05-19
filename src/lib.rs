@@ -4,8 +4,9 @@
 //! https://github.com/Kinnay/Nintendo-File-Formats/wiki
 //!
 //! All file formats are behind feature flags.
-//! Here is a list of available Nintendo resource feature:
-//! ["bfres", "sarc"]
+//! Here is a list of available Nintendo file format features:
+//!
+//! `bfres`, `sarc`
 //!
 //! You can also enable additional features:
 //!
@@ -13,9 +14,18 @@
 //!
 //! `zstd`: ZSTD decompression.
 //!
-//! All features of this crate can be compiles to WebAssembly.
+//! All features of this crate can be compiled to WebAssembly.
 //!
 //! # Examples
+//!
+//! Enable desired features in `Cargo.toml`.
+//!
+//! ```toml
+//!     [dependencies]
+//!     ninres = { version = "*", features = ["bfres", "sarc", "zstd"] }
+//! ```
+//!
+//! In your `main.rs`.
 //!
 //! ```
 //! # use ninres::NinResResult;
@@ -71,6 +81,28 @@ pub enum NinResFile {
     Sarc(sarc::Sarc),
 }
 
+/// Smart convert buffer into any known Nintendo file format.
+///
+/// # Examples
+///
+/// ```
+/// # use ninres::NinResResult;
+/// # #[cfg(all(feature = "sarc", feature = "bfres"))]
+/// # fn example() -> NinResResult {
+///     use std::fs::read;
+///     use ninres::{NinRes, NinResFile};
+///
+///     let buffer = read("foo.pack")?;
+///     let ninres = buffer.as_ninres()?;
+///     
+///     match &ninres {
+///        NinResFile::Bfres(_bfres) => {}
+///        NinResFile::Sarc(_sarc) => {}
+///     }
+///
+///     Ok(ninres)
+/// # }
+/// ```
 #[cfg(any(feature = "bfres", feature = "sarc"))]
 pub trait NinRes {
     fn as_ninres(&self) -> NinResResult;
@@ -129,4 +161,31 @@ impl NinRes for Vec<u8> {
             ])),
         }
     }
+}
+
+/// Convert resource into tar buffer.
+/// This buffer can then e.g. be stored in a file.
+///
+/// The `mode` parameter refers to the file mode within the tar ball.
+///
+/// # Examples
+///
+/// ```
+/// # use ninres::NinResError;
+/// #[cfg(all(not(target_arch = "wasm32"), feature = "sarc"))]
+/// fn main() -> Result<(), NinResError> {
+///     use ninres::{sarc::Sarc, IntoTar};
+///     use std::{fs::{read, File}, io::Write};
+///
+///     let sarc_file = Sarc::new(&read("./assets/M1_Model.pack")?)?;
+///     let tar = sarc_file.into_tar(0o644)?;
+///
+///     let mut file = File::create("M1_Model.tar")?;
+///     file.write_all(&tar.into_inner()[..])?;
+///     Ok(())
+/// }
+/// ```
+#[cfg(feature = "tar_ninres")]
+pub trait IntoTar {
+    fn into_tar(self, mode: u32) -> Result<std::io::Cursor<Vec<u8>>, Error>;
 }

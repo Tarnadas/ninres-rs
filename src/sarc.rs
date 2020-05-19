@@ -2,7 +2,7 @@
 //!
 //! See http://mk8.tockdom.com/wiki/SARC_(File_Format)
 
-use crate::{ByteOrder, Error};
+use crate::*;
 
 use std::convert::TryFrom;
 
@@ -118,9 +118,11 @@ impl Sarc {
             sfat_nodes,
         })
     }
+}
 
-    #[cfg(feature = "tar_ninres")]
-    pub fn into_tar(self, mode: u32) -> Result<Cursor<Vec<u8>>, Error> {
+#[cfg(feature = "tar_ninres")]
+impl IntoTar for Sarc {
+    fn into_tar(self, mode: u32) -> Result<Cursor<Vec<u8>>, Error> {
         let res = vec![];
         let cursor = Cursor::new(res);
         let mut builder = tar::Builder::new(cursor);

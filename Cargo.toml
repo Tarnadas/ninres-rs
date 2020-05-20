@@ -5,6 +5,11 @@ description = "Read commonly used Nintendo file formats."
 authors = ["Mario Reder <mreder1289@gmail.com>"]
 license = "MIT/Apache-2"
 edition = "2018"
+repository = "https://github.com/tarnadas/ninres-rs"
+readme = "README.md"
+keywords = ["gamedev", "parsing", "wasm"]
+categories = ["game-development", "parser-implementations", "wasm"]
+exclude = ["/assets"]
 
 [dependencies]
 cfg-if = "0.1"

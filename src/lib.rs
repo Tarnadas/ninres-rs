@@ -38,8 +38,8 @@
 //!     let ninres = buffer.as_ninres()?;
 //!     
 //!     match &ninres {
-//!        NinResFile::Bfres(_bfres) => {}
-//!        NinResFile::Sarc(_sarc) => {}
+//!         NinResFile::Bfres(_bfres) => {}
+//!         NinResFile::Sarc(_sarc) => {}
 //!     }
 //!
 //!     Ok(ninres)

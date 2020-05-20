@@ -1,5 +1,7 @@
 # Ninres-rs
 
+![Continuous integration](https://github.com/Tarnadas/ninres-rs/workflows/Continuous%20integration/badge.svg)
+
 Read commonly used Nintendo file formats.
 
 Please refer to the Wiki:

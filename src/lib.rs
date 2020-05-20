@@ -47,6 +47,7 @@
 //! ```
 //!
 
+#[cfg(feature = "tar_ninres")]
 #[macro_use]
 extern crate cfg_if;
 
@@ -61,6 +62,7 @@ pub mod sarc;
 pub use error::NinResError;
 use num_enum::TryFromPrimitive;
 
+#[cfg(any(feature = "bfres", feature = "sarc"))]
 pub(crate) type Error = NinResError;
 #[cfg(any(feature = "bfres", feature = "sarc"))]
 pub type NinResResult = Result<NinResFile, Error>;

@@ -28,6 +28,7 @@
 //! In your `main.rs`.
 //!
 //! ```
+//! # #[cfg(all(feature = "sarc", feature = "bfres"))]
 //! # use ninres::NinResResult;
 //! # #[cfg(all(feature = "sarc", feature = "bfres"))]
 //! # fn example() -> NinResResult {

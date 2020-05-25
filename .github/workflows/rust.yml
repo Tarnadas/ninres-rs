@@ -31,12 +31,6 @@ jobs:
           components: rustfmt, clippy
 
       - uses: actions-rs/cargo@v1
-        name: Install Cargo Tools
-        with:
-          command: install
-          args: cargo-audit
-
-      - uses: actions-rs/cargo@v1
         name: Build
         with:
           command: build

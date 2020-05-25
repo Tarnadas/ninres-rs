@@ -31,7 +31,12 @@ jobs:
           override: true
 
       - uses: actions-rs/cargo@v1
+        name: Install Cargo Tools
+        with:
+          command: install
+          args: cargo-audit
+
+      - uses: actions-rs/cargo@v1
         name: Audit
-        if: ${{ !matrix.skip-audit }}
         with:
           command: audit

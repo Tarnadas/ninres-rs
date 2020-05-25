@@ -57,8 +57,3 @@ jobs:
         with:
           command: clippy
           args: -- -D warnings
-
-      - uses: actions-rs/cargo@v1
-        name: Audit
-        with:
-          command: audit

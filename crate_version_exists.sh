@@ -8,7 +8,7 @@
 
     VERION_EXISTS=0
 
-    while IFS='\n' read -ra VERSION; do
+    while IFS=$'\n' read -ra VERSION; do
         for V in "${VERSION[@]}"; do
             if [ "$(echo ninres = ${LIB_VERSION})" = "$V" ]; then
                 VERION_EXISTS=1

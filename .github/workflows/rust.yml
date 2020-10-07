@@ -3,7 +3,7 @@ on: [push, pull_request]
 name: Continuous integration
 
 jobs:
-  ci:
+  test:
     runs-on: ubuntu-latest
     continue-on-error: ${{ matrix.experimental }}
     strategy:
@@ -54,7 +54,7 @@ jobs:
 
   publish:
     if: ${{ github.ref == 'master' }}
-    needs: build
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

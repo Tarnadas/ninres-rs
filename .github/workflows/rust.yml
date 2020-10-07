@@ -30,6 +30,14 @@ jobs:
           override: true
           components: rustfmt, clippy
 
+      - name: Install dependencies
+        run: |
+          cargo install cargo-whatfeatures --no-default-features --features "rustls"
+          export LIB_VERSION=$(cat Cargo.toml | grep version | head -1 | sed 's/[",(version = )]//g')
+          echo LIB_VERSION=$LIB_VERSION
+          export CRATE_VERSION_EXISTS=$(NO_COLOR=1 ./crate_version_exists.sh $LIB_VERSION)
+          echo CRATE_VERSION_EXISTS=$CRATE_VERSION_EXISTS
+
       - uses: actions-rs/cargo@v1
         name: Build
         with:
@@ -51,3 +59,7 @@ jobs:
         with:
           command: clippy
           args: -- -D warnings
+
+      - name: Deploy to Crates.io
+        run: bash crate_publish.sh
+        continue-on-error: true

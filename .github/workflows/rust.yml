@@ -30,15 +30,6 @@ jobs:
           override: true
           components: rustfmt, clippy
 
-      - name: Install dependencies
-        if: matrix.rust == 'stable'
-        run: |
-          cargo install cargo-whatfeatures --no-default-features --features "rustls"
-          export LIB_VERSION=$(cat Cargo.toml | grep version | head -1 | sed 's/[",(version = )]//g')
-          echo LIB_VERSION=$LIB_VERSION
-          export CRATE_VERSION_EXISTS=$(NO_COLOR=1 ./crate_version_exists.sh $LIB_VERSION)
-          echo CRATE_VERSION_EXISTS=$CRATE_VERSION_EXISTS
-
       - uses: actions-rs/cargo@v1
         name: Check
         with:
@@ -61,7 +52,29 @@ jobs:
           command: clippy
           args: -- -D warnings
 
+  publish:
+    if: ${{ github.ref == 'master' }}
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        name: Checkout
+
+      - uses: actions-rs/toolchain@v1
+        name: Install Toolchain
+        with:
+          profile: minimal
+          toolchain: beta
+          override: true
+
+      - name: Check version
+        run: |
+          cargo install cargo-whatfeatures --no-default-features --features "rustls"
+          export LIB_VERSION=$(cat Cargo.toml | grep version | head -1 | sed 's/[",(version = )]//g')
+          echo LIB_VERSION=$LIB_VERSION
+          export CRATE_VERSION_EXISTS=$(NO_COLOR=1 ./crate_version_exists.sh $LIB_VERSION)
+          echo CRATE_VERSION_EXISTS=$CRATE_VERSION_EXISTS
+
       - name: Deploy to Crates.io
-        if: matrix.rust == 'stable'
         run: bash crate_publish.sh
         continue-on-error: true

@@ -12,15 +12,15 @@ categories = ["game-development", "parser-implementations", "wasm"]
 exclude = ["/assets"]
 
 [dependencies]
-cfg-if = "0.1"
+cfg-if = "1"
 num_enum = "0.5"
 ruzstd = { version = "0.2", optional = true }
 tar = { version = "0.4", optional = true }
-thiserror = "1.0"
+thiserror = "1"
 
 [dev-dependencies]
 anyhow = "1"
-test-case = "1.0"
+test-case = "1"
 
 [features]
 default = []

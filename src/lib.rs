@@ -59,6 +59,7 @@ pub mod bfres;
 
 #[cfg(feature = "sarc")]
 pub mod sarc;
+#[cfg(any(feature = "bfres", feature = "sarc"))]
 mod util;
 
 #[cfg(feature = "bfres")]
@@ -67,6 +68,7 @@ pub use error::NinResError;
 use num_enum::TryFromPrimitive;
 #[cfg(feature = "sarc")]
 pub use sarc::*;
+#[cfg(any(feature = "bfres", feature = "sarc"))]
 pub(crate) use util::*;
 
 #[cfg(any(feature = "bfres", feature = "sarc", feature = "tar_ninres"))]

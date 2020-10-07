@@ -2,11 +2,13 @@
 //!
 //! See http://mk8.tockdom.com/wiki/SARC_(File_Format)
 
-use crate::*;
+#[cfg(feature = "tar_ninres")]
+use crate::IntoTar;
+use crate::{read_u16, read_u32, ByteOrderMask, Error};
 
 use std::convert::TryFrom;
 
-#[cfg(feature = "tar_ninres")]
+#[cfg(any(feature = "tar_ninres", feature = "zstd"))]
 use std::io::Cursor;
 
 #[derive(Clone, Debug)]
@@ -18,7 +20,7 @@ pub struct Sarc {
 
 #[derive(Clone, Debug)]
 pub struct SarcHeader {
-    pub byte_order: ByteOrder,
+    pub byte_order: ByteOrderMask,
     pub file_size: u32,
     pub data_offset: u32,
     pub version_number: u16,
@@ -33,8 +35,8 @@ pub struct SfatHeader {
 pub struct SfatNode {
     pub hash: u32,
     pub attributes: u32,
-    pub name_table_offset: Option<u32>,
-    pub name: Option<String>,
+    pub path_table_offset: Option<u32>,
+    pub path: Option<String>,
     pub data_start_offset: u32,
     pub data_end_offset: u32,
     pub data: Vec<u8>,
@@ -54,7 +56,7 @@ impl SfatNode {
 
 impl Sarc {
     pub fn new(buffer: &[u8]) -> Result<Sarc, Error> {
-        let byte_order = ByteOrder::try_from(read_u16(buffer, 0x6, ByteOrder::BigEndian))?;
+        let byte_order = ByteOrderMask::try_from(read_u16(buffer, 0x6, ByteOrderMask::BigEndian))?;
         let file_size = read_u32(buffer, 0x8, byte_order);
         let data_offset = read_u32(buffer, 0xC, byte_order);
         let version_number = read_u16(buffer, 0x10, byte_order);
@@ -87,12 +89,12 @@ impl Sarc {
             sfat_nodes.push(SfatNode {
                 hash,
                 attributes,
-                name_table_offset,
-                name,
+                path_table_offset: name_table_offset,
+                path: name,
                 data_start_offset,
                 data_end_offset,
                 data: data.to_vec(),
-                #[cfg(feature = "ruzstd")]
+                #[cfg(feature = "zstd")]
                 data_decompressed: if b"\x28\xB5\x2F\xFD" == &data[..4] {
                     use std::io::Read;
                     let mut decompressed = vec![];
@@ -123,26 +125,35 @@ impl Sarc {
 #[cfg(feature = "tar_ninres")]
 impl IntoTar for Sarc {
     fn into_tar(self, mode: u32) -> Result<Cursor<Vec<u8>>, Error> {
+        use std::time::SystemTime;
+
         let res = vec![];
         let cursor = Cursor::new(res);
         let mut builder = tar::Builder::new(cursor);
+        let mtime = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
 
         self.sfat_nodes
             .into_iter()
             .map(|node| -> Result<(), Error> {
-                if let Some(name) = node.name {
+                if let Some(name) = node.path {
                     let mut header = tar::Header::new_gnu();
                     header.set_size(node.data.len() as u64);
                     header.set_mode(mode);
+                    header.set_mtime(mtime);
                     cfg_if! {
                         if #[cfg(feature = "zstd")] {
                             builder.append_data(&mut header, name.clone(), &node.data[..])?;
                             if let Some(data_deflated) = node.data_decompressed {
                                 let mut header = tar::Header::new_gnu();
                                 header.set_size(data_deflated.len() as u64);
+                                header.set_cksum();
                                 builder.append_data(&mut header, format!("{}.tar", name), &data_deflated[..])?;
                             }
                         } else {
+                            header.set_cksum();
                             builder.append_data(&mut header, name, &node.data[..])?;
                         }
                     }
@@ -153,27 +164,6 @@ impl IntoTar for Sarc {
         builder.finish()?;
         Ok(builder.into_inner()?)
     }
-}
-
-fn read_u16(file: &[u8], offset: usize, byte_order: ByteOrder) -> u16 {
-    let from_bytes = match byte_order {
-        ByteOrder::BigEndian => u16::from_be_bytes,
-        ByteOrder::LittleEndian => u16::from_le_bytes,
-    };
-    from_bytes([file[offset], file[offset + 1]])
-}
-
-fn read_u32(file: &[u8], offset: usize, byte_order: ByteOrder) -> u32 {
-    let from_bytes = match byte_order {
-        ByteOrder::BigEndian => u32::from_be_bytes,
-        ByteOrder::LittleEndian => u32::from_le_bytes,
-    };
-    from_bytes([
-        file[offset],
-        file[offset + 1],
-        file[offset + 2],
-        file[offset + 3],
-    ])
 }
 
 #[cfg(test)]

@@ -1,18 +1,20 @@
 use super::*;
 
 use num_enum::TryFromPrimitiveError;
-use std::{io, str::Utf8Error, string::FromUtf8Error};
+use std::{array::TryFromSliceError, io, str::Utf8Error, string::FromUtf8Error};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum NinResError {
     #[error("Type unknown or not implemented. Magic number: {0:?}")]
     TypeUnknownOrNotImplemented([u8; 4]),
-    #[error("IO error: {0}")]
+    #[error(transparent)]
     IoError(std::io::Error),
     #[error("Byte order invalid")]
     ByteOrderInvalid,
-    #[error("UTF8 encoding error: {0}")]
+    #[error(transparent)]
+    TryFromSlice(TryFromSliceError),
+    #[error(transparent)]
     Utf8(Utf8Error),
     #[cfg(feature = "tar_ninres")]
     #[error("Tar append error")]
@@ -28,9 +30,15 @@ impl<'a> From<io::Error> for NinResError {
     }
 }
 
-impl<'a> From<TryFromPrimitiveError<ByteOrder>> for NinResError {
-    fn from(_: TryFromPrimitiveError<ByteOrder>) -> Self {
+impl<'a> From<TryFromPrimitiveError<ByteOrderMask>> for NinResError {
+    fn from(_: TryFromPrimitiveError<ByteOrderMask>) -> Self {
         Self::ByteOrderInvalid
+    }
+}
+
+impl<'a> From<TryFromSliceError> for NinResError {
+    fn from(err: TryFromSliceError) -> Self {
+        Self::TryFromSlice(err)
     }
 }
 

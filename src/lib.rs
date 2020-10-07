@@ -59,18 +59,24 @@ pub mod bfres;
 
 #[cfg(feature = "sarc")]
 pub mod sarc;
+mod util;
 
+#[cfg(feature = "bfres")]
+pub use bfres::*;
 pub use error::NinResError;
 use num_enum::TryFromPrimitive;
+#[cfg(feature = "sarc")]
+pub use sarc::*;
+pub(crate) use util::*;
 
-#[cfg(any(feature = "bfres", feature = "sarc"))]
+#[cfg(any(feature = "bfres", feature = "sarc", feature = "tar_ninres"))]
 pub(crate) type Error = NinResError;
 #[cfg(any(feature = "bfres", feature = "sarc"))]
 pub type NinResResult = Result<NinResFile, Error>;
 
 #[derive(Clone, Copy, Debug, TryFromPrimitive)]
 #[repr(u16)]
-pub enum ByteOrder {
+pub enum ByteOrderMask {
     BigEndian = 0xfeff,
     LittleEndian = 0xfffe,
 }
@@ -82,6 +88,18 @@ pub enum NinResFile {
     Bfres(bfres::Bfres),
     #[cfg(feature = "sarc")]
     Sarc(sarc::Sarc),
+}
+
+#[cfg(any(feature = "bfres", feature = "sarc"))]
+impl NinResFile {
+    pub fn get_extension(&self) -> &str {
+        match self {
+            #[cfg(feature = "bfres")]
+            Self::Bfres(_) => "bfres",
+            #[cfg(feature = "sarc")]
+            Self::Sarc(_) => "sarc",
+        }
+    }
 }
 
 /// Smart convert buffer into any known Nintendo file format.
@@ -117,9 +135,9 @@ impl NinRes for &[u8] {
     fn as_ninres(&self) -> NinResResult {
         match std::str::from_utf8(&self[..4])? {
             #[cfg(feature = "sarc")]
-            "SARC" => Ok(NinResFile::Sarc(sarc::Sarc::new(self)?)),
+            "SARC" => Ok(NinResFile::Sarc(Sarc::new(self)?)),
             #[cfg(feature = "bfres")]
-            "FRES" => Ok(NinResFile::Bfres(bfres::Bfres::new(self)?)),
+            "FRES" => Ok(NinResFile::Bfres(Bfres::new(self)?)),
             _ => Err(NinResError::TypeUnknownOrNotImplemented([
                 self[0], self[1], self[2], self[3],
             ])),
@@ -129,9 +147,9 @@ impl NinRes for &[u8] {
     fn into_ninres(self) -> NinResResult {
         match std::str::from_utf8(&self[..4])? {
             #[cfg(feature = "sarc")]
-            "SARC" => Ok(NinResFile::Sarc(sarc::Sarc::new(self)?)),
+            "SARC" => Ok(NinResFile::Sarc(Sarc::new(self)?)),
             #[cfg(feature = "bfres")]
-            "FRES" => Ok(NinResFile::Bfres(bfres::Bfres::new(self)?)),
+            "FRES" => Ok(NinResFile::Bfres(Bfres::new(self)?)),
             _ => Err(NinResError::TypeUnknownOrNotImplemented([
                 self[0], self[1], self[2], self[3],
             ])),
@@ -144,9 +162,9 @@ impl NinRes for Vec<u8> {
     fn as_ninres(&self) -> NinResResult {
         match std::str::from_utf8(&self[..4])? {
             #[cfg(feature = "sarc")]
-            "SARC" => Ok(NinResFile::Sarc(sarc::Sarc::new(self)?)),
+            "SARC" => Ok(NinResFile::Sarc(Sarc::new(self)?)),
             #[cfg(feature = "bfres")]
-            "FRES" => Ok(NinResFile::Bfres(bfres::Bfres::new(self)?)),
+            "FRES" => Ok(NinResFile::Bfres(Bfres::new(self)?)),
             _ => Err(NinResError::TypeUnknownOrNotImplemented([
                 self[0], self[1], self[2], self[3],
             ])),
@@ -156,9 +174,9 @@ impl NinRes for Vec<u8> {
     fn into_ninres(self) -> NinResResult {
         match std::str::from_utf8(&self[..4])? {
             #[cfg(feature = "sarc")]
-            "SARC" => Ok(NinResFile::Sarc(sarc::Sarc::new(&self[..])?)),
+            "SARC" => Ok(NinResFile::Sarc(Sarc::new(&self[..])?)),
             #[cfg(feature = "bfres")]
-            "FRES" => Ok(NinResFile::Bfres(bfres::Bfres::new(&self[..])?)),
+            "FRES" => Ok(NinResFile::Bfres(Bfres::new(&self[..])?)),
             _ => Err(NinResError::TypeUnknownOrNotImplemented([
                 self[0], self[1], self[2], self[3],
             ])),

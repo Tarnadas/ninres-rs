@@ -5,4 +5,4 @@ if [[ $CRATE_VERSION_EXISTS == 1 ]]; then
 fi
 
 # Crates.io publish
-cargo publish --token $CARGO_CREDENTIALS
+cargo publish --token \"$CARGO_CREDENTIALS\"

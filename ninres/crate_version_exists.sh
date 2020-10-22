@@ -4,7 +4,7 @@
     args=("$@")
     LIB_VERSION=${args[0]}
 
-    VERSIONS=$(cargo whatfeatures -l ninres)
+    VERSIONS=$(cd ninres && cargo whatfeatures -l ninres)
 
     VERION_EXISTS=0
 

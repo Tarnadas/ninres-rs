@@ -2,7 +2,7 @@ use anyhow::Result;
 use ninres::{NinRes, NinResFile, Sarc};
 use std::{fs, path::PathBuf};
 
-static M1_MODEL_PACK: &[u8] = include_bytes!("../assets/M1_Model.pack");
+static M1_MODEL_PACK: &[u8] = include_bytes!("../../assets/M1_Model.pack");
 
 fn main() -> Result<()> {
     let sarc = Sarc::new(M1_MODEL_PACK);

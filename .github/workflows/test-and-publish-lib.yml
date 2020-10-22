@@ -1,6 +1,6 @@
 on: [push, pull_request]
 
-name: Continuous integration
+name: Continuous Integration Lib
 
 jobs:
   test:
@@ -34,23 +34,25 @@ jobs:
         name: Check
         with:
           command: check
+          args: -p ninres
 
       - uses: actions-rs/cargo@v1
         name: Test
         with:
           command: test
+          args: -p ninres
 
       - uses: actions-rs/cargo@v1
         name: Fmt
         with:
           command: fmt
-          args: --all -- --check
+          args: -p ninres -- --check
 
       - uses: actions-rs/cargo@v1
         name: Clippy
         with:
           command: clippy
-          args: -- -D warnings
+          args: -p ninres -- -D warnings
 
   publish:
     if: github.ref == 'refs/heads/master'
@@ -70,13 +72,13 @@ jobs:
       - name: Check version
         run: |
           cargo install cargo-whatfeatures --no-default-features --features "rustls"
-          export LIB_VERSION=$(cat Cargo.toml | grep version | head -1 | sed 's/[",(version = )]//g')
+          export LIB_VERSION=$(cat ninres/Cargo.toml | grep version | head -1 | sed 's/[",(version = )]//g')
           echo LIB_VERSION=$LIB_VERSION
-          export CRATE_VERSION_EXISTS=$(NO_COLOR=1 ./crate_version_exists.sh $LIB_VERSION)
+          export CRATE_VERSION_EXISTS=$(NO_COLOR=1 ./ninres/crate_version_exists.sh $LIB_VERSION)
           echo CRATE_VERSION_EXISTS=$CRATE_VERSION_EXISTS
 
       - name: Deploy to Crates.io
         env:
           CARGO_CREDENTIALS: ${{ secrets.CARGO_CREDENTIALS }}
-        run: bash crate_publish.sh
+        run: bash ninres/crate_publish.sh
         continue-on-error: true

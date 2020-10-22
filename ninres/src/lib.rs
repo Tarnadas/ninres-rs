@@ -200,7 +200,7 @@ impl NinRes for Vec<u8> {
 ///     use ninres::{sarc::Sarc, IntoTar};
 ///     use std::{fs::{read, File}, io::Write};
 ///
-///     let sarc_file = Sarc::new(&read("./assets/M1_Model.pack")?)?;
+///     let sarc_file = Sarc::new(&read("../assets/M1_Model.pack")?)?;
 ///     let tar = sarc_file.into_tar(0o644)?;
 ///
 ///     let mut file = File::create("M1_Model.tar")?;

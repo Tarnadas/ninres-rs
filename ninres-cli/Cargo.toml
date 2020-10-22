@@ -1,0 +1,11 @@
+[package]
+name = "ninres-cli"
+version = "0.0.1"
+description = "Read commonly used Nintendo file formats."
+authors = ["Mario Reder <mreder1289@gmail.com>"]
+license = "MIT OR Apache-2.0"
+edition = "2018"
+repository = "https://github.com/tarnadas/ninres-rs"
+readme = "README.md"
+keywords = ["gamedev", "parsing", "wasm"]
+categories = ["game-development", "parser-implementations", "wasm"]

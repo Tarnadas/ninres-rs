@@ -1,0 +1,36 @@
+[package]
+name = "ninres"
+version = "0.0.1"
+description = "Read commonly used Nintendo file formats."
+authors = ["Mario Reder <mreder1289@gmail.com>"]
+license = "MIT OR Apache-2.0"
+edition = "2018"
+repository = "https://github.com/tarnadas/ninres-rs"
+readme = "README.md"
+keywords = ["gamedev", "parsing", "wasm"]
+categories = ["game-development", "parser-implementations", "wasm"]
+
+[dependencies]
+cfg-if = "1"
+num_enum = "0.5"
+ruzstd = { version = "0.2", optional = true }
+tar = { version = "0.4", optional = true }
+thiserror = "1"
+
+[dev-dependencies]
+anyhow = "1"
+test-case = "1"
+
+[features]
+default = []
+bfres = []
+sarc = []
+tar_ninres = ["tar"]
+zstd = ["ruzstd"]
+
+[package.metadata.docs.rs]
+all-features = true
+
+[[example]]
+name = "sarc"
+required-features = ["sarc", "zstd"]

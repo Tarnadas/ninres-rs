@@ -171,9 +171,9 @@ mod tests {
     use super::*;
     use test_case::test_case;
 
-    static M1_MODEL_PACK: &[u8] = include_bytes!("../assets/M1_Model.pack");
-    static M3_MODEL_PACK: &[u8] = include_bytes!("../assets/M3_Model.pack");
-    static MW_MODEL_PACK: &[u8] = include_bytes!("../assets/MW_Model.pack");
+    static M1_MODEL_PACK: &[u8] = include_bytes!("../../assets/M1_Model.pack");
+    static M3_MODEL_PACK: &[u8] = include_bytes!("../../assets/M3_Model.pack");
+    static MW_MODEL_PACK: &[u8] = include_bytes!("../../assets/MW_Model.pack");
 
     #[test_case(M1_MODEL_PACK; "with M1 Model Pack")]
     #[test_case(M3_MODEL_PACK; "with M3 Model Pack")]

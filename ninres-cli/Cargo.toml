@@ -9,3 +9,11 @@ repository = "https://github.com/tarnadas/ninres-rs"
 readme = "README.md"
 keywords = ["gamedev", "parsing", "wasm"]
 categories = ["game-development", "parser-implementations", "wasm"]
+
+[dependencies]
+color-eyre = "0.5"
+ninres = { path = "../ninres", features = ["bfres", "sarc", "tar_ninres", "zstd"] }
+structopt = "0.3"
+
+[profile.dev.package.backtrace]
+opt-level = 3

@@ -1,7 +1,7 @@
 # Ninres-rs
 
 ![Continuous integration](https://github.com/Tarnadas/ninres-rs/workflows/Continuous%20integration/badge.svg)
-[<img alt="blog.rust-lang.org" src="https://img.shields.io/badge/Rust-1.42-blue?style=for-the-badge&color=fc8d62&logo=rust" height="20">](https://blog.rust-lang.org/2020/03/12/Rust-1.42.html)
+[<img alt="blog.rust-lang.org" src="https://img.shields.io/badge/Rust-1.43-blue?style=for-the-badge&color=fc8d62&logo=rust" height="20">](https://blog.rust-lang.org/2020/04/23/Rust-1.43.0.html)
 
 Read commonly used Nintendo file formats.
 

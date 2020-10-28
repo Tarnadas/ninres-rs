@@ -8,4 +8,4 @@ args=("$@")
 CRATE_PATH=${args[0]}
 
 # Crates.io publish
-cd $CRATE_PATH && cargo publish --token \"$CARGO_CREDENTIALS\"
+cd $CRATE_PATH && cargo publish --token $CARGO_CREDENTIALS

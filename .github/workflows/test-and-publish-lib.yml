@@ -74,11 +74,11 @@ jobs:
           cargo install cargo-whatfeatures --no-default-features --features "rustls"
           export LIB_VERSION=$(cat ninres/Cargo.toml | grep version | head -1 | sed 's/[",(version = )]//g')
           echo LIB_VERSION=$LIB_VERSION
-          export CRATE_VERSION_EXISTS=$(NO_COLOR=1 ./ninres/crate_version_exists.sh $LIB_VERSION)
+          export CRATE_VERSION_EXISTS=$(NO_COLOR=1 ./crate_version_exists.sh $LIB_VERSION ninres)
           echo CRATE_VERSION_EXISTS=$CRATE_VERSION_EXISTS
 
       - name: Deploy to Crates.io
         env:
           CARGO_CREDENTIALS: ${{ secrets.CARGO_CREDENTIALS }}
-        run: bash ninres/crate_publish.sh
+        run: bash crate_publish.sh ninres
         continue-on-error: true

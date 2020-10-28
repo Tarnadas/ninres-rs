@@ -83,5 +83,5 @@ jobs:
       - name: Deploy to Crates.io
         env:
           CARGO_CREDENTIALS: ${{ secrets.CARGO_CREDENTIALS }}
-        run: cp README.md $CRATE_PATH/README.md && bash crate_publish.sh $CRATE_PATH
+        run: cp README.md $CRATE_PATH/README.md && git add $CRATE_PATH/README.md && git commit -m "add readme" && bash crate_publish.sh $CRATE_PATH
         continue-on-error: true

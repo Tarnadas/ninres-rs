@@ -37,25 +37,25 @@ jobs:
         name: Check
         with:
           command: check
-          args: -p $CRATE_PATH
+          args: -p ${{ env.CRATE_PATH }}
 
       - uses: actions-rs/cargo@v1
         name: Test
         with:
           command: test
-          args: -p $CRATE_PATH
+          args: -p ${{ env.CRATE_PATH }}
 
       - uses: actions-rs/cargo@v1
         name: Fmt
         with:
           command: fmt
-          args: -p $CRATE_PATH -- --check
+          args: -p ${{ env.CRATE_PATH }} -- --check
 
       - uses: actions-rs/cargo@v1
         name: Clippy
         with:
           command: clippy
-          args: -p $CRATE_PATH -- -D warnings
+          args: -p ${{ env.CRATE_PATH }} -- -D warnings
 
   publish:
     if: github.ref == 'refs/heads/master'

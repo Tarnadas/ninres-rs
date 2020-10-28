@@ -16,7 +16,7 @@ path = "src/main.rs"
 
 [dependencies]
 color-eyre = "0.5"
-ninres = { version = "*", path = "../ninres", features = ["bfres", "sarc", "tar_ninres", "zstd"] }
+ninres = { version = "0.0", path = "../ninres", features = ["bfres", "sarc", "tar_ninres", "zstd"] }
 structopt = "0.3"
 
 [profile.dev.package.backtrace]

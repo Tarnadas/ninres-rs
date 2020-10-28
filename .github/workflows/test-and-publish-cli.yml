@@ -1,9 +1,9 @@
 on: [push, pull_request]
 
-name: Continuous Integration Lib
+name: Continuous Integration Cli
 
 env:
-  CRATE_PATH: ninres
+  CRATE_PATH: ninres-cli
 
 jobs:
   test:

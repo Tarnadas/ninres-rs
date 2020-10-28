@@ -1,6 +1,6 @@
 [package]
 name = "ninres"
-version = "0.0.1"
+version = "0.0.2"
 description = "Read commonly used Nintendo file formats."
 authors = ["Mario Reder <mreder1289@gmail.com>"]
 license = "MIT OR Apache-2.0"

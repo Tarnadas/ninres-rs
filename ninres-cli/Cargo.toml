@@ -10,6 +10,10 @@ readme = "README.md"
 keywords = ["gamedev", "parsing", "wasm"]
 categories = ["game-development", "parser-implementations", "wasm"]
 
+[[bin]]
+name = "ninres"
+path = "src/main.rs"
+
 [dependencies]
 color-eyre = "0.5"
 ninres = { path = "../ninres", features = ["bfres", "sarc", "tar_ninres", "zstd"] }

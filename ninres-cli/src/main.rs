@@ -1,12 +1,17 @@
 use color_eyre::eyre::Result;
 use ninres::{NinRes, NinResFile, Sarc};
-use std::{fs, path::PathBuf};
+use std::{
+    fs::{self, read},
+    path::PathBuf,
+};
 use structopt::StructOpt;
+
+/// A command-line tool to handle commonly used Nintendo files formats.
 #[derive(StructOpt, Debug)]
 #[structopt(name = "ninres")]
 struct Opt {
     #[structopt(subcommand)]
-    cmd: Option<Cmd>,
+    pub cmd: Option<Cmd>,
 }
 
 #[derive(StructOpt, Debug, PartialEq)]
@@ -18,7 +23,9 @@ pub enum Cmd {
 #[derive(StructOpt, Debug, PartialEq)]
 pub struct ExtractOpt {
     #[structopt(short, long, parse(from_os_str))]
-    output: PathBuf,
+    pub input: PathBuf,
+    #[structopt(short, long, parse(from_os_str))]
+    pub output: PathBuf,
 }
 
 fn main() -> Result<()> {
@@ -27,15 +34,32 @@ fn main() -> Result<()> {
     let opt = Opt::from_args();
     dbg!(&opt);
 
+    match opt.cmd {
+        Some(Cmd::Extract(extract_options)) => {
+            let buffer = read(extract_options.input)?;
+            let ninres = buffer.as_ninres()?;
+
+            match &ninres {
+                NinResFile::Bfres(_bfres) => {}
+                NinResFile::Sarc(sarc) => {
+                    extract_sarc(sarc, extract_options.output)?;
+                }
+            }
+        }
+        None => {
+            Opt::clap().print_help()?;
+        }
+    }
+
     Ok(())
 }
 
-fn extract_sarc(sarc: Sarc, path: PathBuf) -> Result<()> {
+fn extract_sarc(sarc: &Sarc, out_path: PathBuf) -> Result<()> {
     sarc.sfat_nodes
-        .into_iter()
+        .iter()
         .map(move |sfat| -> Result<_> {
-            let mut path = path.clone();
-            if let Some(sfat_path) = sfat.path {
+            let mut path = out_path.clone();
+            if let Some(sfat_path) = &sfat.path {
                 path.push(sfat_path);
                 let mut folder_path = path.clone();
                 folder_path.pop();
@@ -43,16 +67,16 @@ fn extract_sarc(sarc: Sarc, path: PathBuf) -> Result<()> {
                     fs::create_dir_all(folder_path)?;
                 }
 
-                let data = if let Some(data) = sfat.data_decompressed {
+                let data = if let Some(data) = &sfat.data_decompressed {
                     data
                 } else {
-                    sfat.data
+                    &sfat.data
                 };
 
                 match data.as_ninres() {
                     Ok(file) => {
                         path.set_extension(file.get_extension().to_string());
-                        if let NinResFile::Sarc(sarc) = file {
+                        if let NinResFile::Sarc(sarc) = &file {
                             let mut base_path = path.clone();
                             base_path.pop();
                             base_path.push(path.file_stem().unwrap());

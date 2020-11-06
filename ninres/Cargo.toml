@@ -14,7 +14,7 @@ categories = ["game-development", "parser-implementations", "wasm"]
 cfg-if = "1"
 num_enum = "0.5"
 ruzstd = { version = "0.2", optional = true }
-tar = { version = "0.4", optional = true }
+tar_crate = { package = "tar", version = "0.4", optional = true }
 thiserror = "1"
 
 [dev-dependencies]
@@ -25,7 +25,7 @@ test-case = "1"
 default = []
 bfres = []
 sarc = []
-tar_ninres = ["tar"]
+tar = ["tar_crate"]
 zstd = ["ruzstd"]
 
 [package.metadata.docs.rs]

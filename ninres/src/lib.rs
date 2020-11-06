@@ -10,7 +10,7 @@
 //!
 //! You can also enable additional features:
 //!
-//! `tar_ninres`: write Nintendo resource to tar ball.
+//! `tar`: write Nintendo resource to tar ball.
 //!
 //! `zstd`: ZSTD decompression.
 //!
@@ -48,7 +48,9 @@
 //! ```
 //!
 
-#[cfg(feature = "tar_ninres")]
+extern crate tar_crate as tar;
+
+#[cfg(feature = "tar")]
 #[macro_use]
 extern crate cfg_if;
 
@@ -71,7 +73,7 @@ pub use sarc::*;
 #[cfg(any(feature = "bfres", feature = "sarc"))]
 pub(crate) use util::*;
 
-#[cfg(any(feature = "bfres", feature = "sarc", feature = "tar_ninres"))]
+#[cfg(any(feature = "bfres", feature = "sarc", feature = "tar"))]
 pub(crate) type Error = NinResError;
 #[cfg(any(feature = "bfres", feature = "sarc"))]
 pub type NinResResult = Result<NinResFile, Error>;
@@ -208,7 +210,7 @@ impl NinRes for Vec<u8> {
 ///     Ok(())
 /// }
 /// ```
-#[cfg(feature = "tar_ninres")]
+#[cfg(feature = "tar")]
 pub trait IntoTar {
     fn into_tar(self, mode: u32) -> Result<std::io::Cursor<Vec<u8>>, Error>;
 }

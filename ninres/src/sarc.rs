@@ -2,13 +2,13 @@
 //!
 //! See http://mk8.tockdom.com/wiki/SARC_(File_Format)
 
-#[cfg(feature = "tar_ninres")]
+#[cfg(feature = "tar")]
 use crate::IntoTar;
 use crate::{read_u16, read_u32, ByteOrderMask, Error};
 
 use std::convert::TryFrom;
 
-#[cfg(any(feature = "tar_ninres", feature = "zstd"))]
+#[cfg(any(feature = "tar", feature = "zstd"))]
 use std::io::Cursor;
 
 #[derive(Clone, Debug)]
@@ -122,7 +122,7 @@ impl Sarc {
     }
 }
 
-#[cfg(feature = "tar_ninres")]
+#[cfg(feature = "tar")]
 impl IntoTar for Sarc {
     fn into_tar(self, mode: u32) -> Result<Cursor<Vec<u8>>, Error> {
         use std::time::SystemTime;

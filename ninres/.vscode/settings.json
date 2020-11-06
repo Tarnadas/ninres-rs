@@ -1,11 +1,4 @@
 {
-  "rust-analyzer.checkOnSave.extraArgs": [
-    "--features=tar_ninres,zstd"
-  ],
-  "rust-analyzer.cargo.features": [
-    "bfres",
-    "sarc",
-    "tar_ninres",
-    "zstd"
-  ]
+  "rust-analyzer.checkOnSave.extraArgs": ["--features=tar,zstd"],
+  "rust-analyzer.cargo.features": ["bfres", "sarc", "tar", "zstd"]
 }

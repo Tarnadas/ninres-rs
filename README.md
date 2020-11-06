@@ -16,7 +16,7 @@ Here is a list of available Nintendo file format features:
 
 You can also enable additional features:
 
-`tar_ninres`: write Nintendo resource to tar ball.
+`tar`: write Nintendo resource to tar ball.
 
 `zstd`: ZSTD decompression.
 

@@ -16,7 +16,7 @@ pub enum NinResError {
     TryFromSlice(TryFromSliceError),
     #[error(transparent)]
     Utf8(Utf8Error),
-    #[cfg(feature = "tar_ninres")]
+    #[cfg(feature = "tar")]
     #[error("Tar append error")]
     TarAppend,
     #[cfg(feature = "zstd")]

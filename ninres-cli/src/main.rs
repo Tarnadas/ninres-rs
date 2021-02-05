@@ -32,7 +32,6 @@ fn main() -> Result<()> {
     color_eyre::install()?;
 
     let opt = Opt::from_args();
-    dbg!(&opt);
 
     match opt.cmd {
         Some(Cmd::Extract(extract_options)) => {
@@ -73,17 +72,14 @@ fn extract_sarc(sarc: &Sarc, out_path: PathBuf) -> Result<()> {
                     &sfat.data
                 };
 
-                match data.as_ninres() {
-                    Ok(file) => {
-                        path.set_extension(file.get_extension().to_string());
-                        if let NinResFile::Sarc(sarc) = &file {
-                            let mut base_path = path.clone();
-                            base_path.pop();
-                            base_path.push(path.file_stem().unwrap());
-                            extract_sarc(sarc, base_path)?;
-                        }
+                if let Ok(file) = data.as_ninres() {
+                    path.set_extension(file.get_extension().to_string());
+                    if let NinResFile::Sarc(sarc) = &file {
+                        let mut base_path = path.clone();
+                        base_path.pop();
+                        base_path.push(path.file_stem().unwrap());
+                        extract_sarc(sarc, base_path)?;
                     }
-                    _ => {}
                 }
                 fs::write(path, data)?;
             }

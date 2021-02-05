@@ -45,12 +45,13 @@ pub struct SfatNode {
 }
 
 impl SfatNode {
-    fn get_hash(data: &[u32], length: usize, key: u32) -> u32 {
+    fn _get_hash(data: &[u32], length: usize, key: u32) -> u32 {
         let mut result = 0;
+        #[allow(clippy::needless_range_loop)]
         for i in 0..length {
             result = data[i] + result * key;
         }
-        return result;
+        result
     }
 }
 
@@ -99,8 +100,8 @@ impl Sarc {
                     use std::io::Read;
                     let mut decompressed = vec![];
                     let mut cursor = Cursor::new(data);
-                    let mut decoder = ruzstd::StreamingDecoder::new(&mut cursor)
-                        .map_err(|err| Error::ZstdError(err))?;
+                    let mut decoder =
+                        ruzstd::StreamingDecoder::new(&mut cursor).map_err(Error::ZstdError)?;
 
                     decoder.read_to_end(&mut decompressed).unwrap();
                     Some(decompressed)
@@ -137,7 +138,7 @@ impl IntoTar for Sarc {
 
         self.sfat_nodes
             .into_iter()
-            .map(|node| -> Result<(), Error> {
+            .try_for_each(|node| -> Result<(), Error> {
                 if let Some(name) = node.path {
                     let mut header = tar::Header::new_gnu();
                     header.set_size(node.data.len() as u64);
@@ -159,8 +160,7 @@ impl IntoTar for Sarc {
                     }
                 }
                 Ok(())
-            })
-            .collect::<Result<(), Error>>()?;
+            })?;
         builder.finish()?;
         Ok(builder.into_inner()?)
     }
@@ -188,7 +188,7 @@ mod tests {
     #[test_case(M1_MODEL_PACK, "M1_Model.tar"; "with M1 Model Pack")]
     #[test_case(M3_MODEL_PACK, "M3_Model.tar"; "with M3 Model Pack")]
     #[test_case(MW_MODEL_PACK, "MW_Model.tar"; "with MW Model Pack")]
-    fn test_into_tar<'a>(sarc_file: &'a [u8], file_name: &str) -> Result<(), Error> {
+    fn test_into_tar(sarc_file: &[u8], file_name: &str) -> Result<(), Error> {
         let sarc_file = Sarc::new(sarc_file)?;
         let tar = sarc_file.into_tar(0o644)?;
 

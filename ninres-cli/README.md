@@ -2,8 +2,7 @@
 
 A command-line tool to handle commonly used Nintendo file formats.
 
-Please refer to the Wiki:
-https://github.com/Kinnay/Nintendo-File-Formats/wiki
+Please refer to the [Wiki](https://github.com/Kinnay/Nintendo-File-Formats/wiki).
 
 ## Installation
 

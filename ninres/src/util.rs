@@ -1,17 +1,17 @@
-use crate::ByteOrderMask;
+use crate::ByteOrderMark;
 
-pub fn read_u16(file: &[u8], offset: usize, bom: ByteOrderMask) -> u16 {
+pub fn read_u16(file: &[u8], offset: usize, bom: ByteOrderMark) -> u16 {
     let from_bytes = match bom {
-        ByteOrderMask::BigEndian => u16::from_be_bytes,
-        ByteOrderMask::LittleEndian => u16::from_le_bytes,
+        ByteOrderMark::BigEndian => u16::from_be_bytes,
+        ByteOrderMark::LittleEndian => u16::from_le_bytes,
     };
     from_bytes([file[offset], file[offset + 1]])
 }
 
-pub fn read_u32(file: &[u8], offset: usize, bom: ByteOrderMask) -> u32 {
+pub fn read_u32(file: &[u8], offset: usize, bom: ByteOrderMark) -> u32 {
     let from_bytes = match bom {
-        ByteOrderMask::BigEndian => u32::from_be_bytes,
-        ByteOrderMask::LittleEndian => u32::from_le_bytes,
+        ByteOrderMark::BigEndian => u32::from_be_bytes,
+        ByteOrderMark::LittleEndian => u32::from_le_bytes,
     };
     from_bytes([
         file[offset],
@@ -21,10 +21,10 @@ pub fn read_u32(file: &[u8], offset: usize, bom: ByteOrderMask) -> u32 {
     ])
 }
 
-pub fn read_i32(file: &[u8], offset: usize, bom: ByteOrderMask) -> i32 {
+pub fn read_i32(file: &[u8], offset: usize, bom: ByteOrderMark) -> i32 {
     let from_bytes = match bom {
-        ByteOrderMask::BigEndian => i32::from_be_bytes,
-        ByteOrderMask::LittleEndian => i32::from_le_bytes,
+        ByteOrderMark::BigEndian => i32::from_be_bytes,
+        ByteOrderMark::LittleEndian => i32::from_le_bytes,
     };
     from_bytes([
         file[offset],

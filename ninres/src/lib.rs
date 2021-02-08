@@ -80,7 +80,7 @@ pub type NinResResult = Result<NinResFile, Error>;
 
 #[derive(Clone, Copy, Debug, TryFromPrimitive)]
 #[repr(u16)]
-pub enum ByteOrderMask {
+pub enum ByteOrderMark {
     BigEndian = 0xfeff,
     LittleEndian = 0xfffe,
 }

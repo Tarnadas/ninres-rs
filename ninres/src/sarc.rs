@@ -4,7 +4,7 @@
 
 #[cfg(feature = "tar")]
 use crate::IntoTar;
-use crate::{read_u16, read_u32, ByteOrderMask, Error};
+use crate::{read_u16, read_u32, ByteOrderMark, Error};
 
 use std::convert::TryFrom;
 
@@ -20,7 +20,7 @@ pub struct Sarc {
 
 #[derive(Clone, Debug)]
 pub struct SarcHeader {
-    pub byte_order: ByteOrderMask,
+    pub byte_order: ByteOrderMark,
     pub file_size: u32,
     pub data_offset: u32,
     pub version_number: u16,
@@ -57,7 +57,7 @@ impl SfatNode {
 
 impl Sarc {
     pub fn new(buffer: &[u8]) -> Result<Sarc, Error> {
-        let byte_order = ByteOrderMask::try_from(read_u16(buffer, 0x6, ByteOrderMask::BigEndian))?;
+        let byte_order = ByteOrderMark::try_from(read_u16(buffer, 0x6, ByteOrderMark::BigEndian))?;
         let file_size = read_u32(buffer, 0x8, byte_order);
         let data_offset = read_u32(buffer, 0xC, byte_order);
         let version_number = read_u16(buffer, 0x10, byte_order);

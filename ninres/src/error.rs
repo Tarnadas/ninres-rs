@@ -24,8 +24,8 @@ pub enum NinResError {
     ZstdError(String),
 }
 
-impl<'a> From<TryFromPrimitiveError<ByteOrderMask>> for NinResError {
-    fn from(_: TryFromPrimitiveError<ByteOrderMask>) -> Self {
+impl<'a> From<TryFromPrimitiveError<ByteOrderMark>> for NinResError {
+    fn from(_: TryFromPrimitiveError<ByteOrderMark>) -> Self {
         Self::ByteOrderInvalid
     }
 }

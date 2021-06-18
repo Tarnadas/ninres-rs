@@ -33,19 +33,9 @@ impl ByteOrderMark {
     }
 }
 
-pub trait Buf {
-    fn set_position(&mut self, pos: u64);
-
-    fn seek(&mut self, seek_from: SeekFrom) -> Result<u64, Error>;
-
-    fn read_u16(&mut self) -> Result<u16, Error>;
-
-    fn read_u32(&mut self) -> Result<u32, Error>;
-}
-
-macro_rules! get_number {
+macro_rules! read_number {
     ( $func:ident, $num:ty, $bytes:expr ) => {
-        fn $func(&mut self) -> Result<$num, Error> {
+        pub fn $func(&mut self) -> Result<$num, Error> {
             match self {
                 Self::BigEndian(cursor) => {
                     let res = BE::$func(
@@ -68,14 +58,20 @@ macro_rules! get_number {
     };
 }
 
-impl Buf for ByteOrderMark {
-    fn set_position(&mut self, pos: u64) {
+impl ByteOrderMark {
+    pub fn position(&self) -> u64 {
+        match self {
+            Self::BigEndian(bytes) | Self::LittleEndian(bytes) => bytes.position(),
+        }
+    }
+
+    pub fn set_position(&mut self, pos: u64) {
         match self {
             Self::BigEndian(bytes) | Self::LittleEndian(bytes) => bytes.set_position(pos),
         }
     }
 
-    fn seek(&mut self, seek_from: SeekFrom) -> Result<u64, Error> {
+    pub fn seek(&mut self, seek_from: SeekFrom) -> Result<u64, Error> {
         match self {
             ByteOrderMark::BigEndian(cursor) | ByteOrderMark::LittleEndian(cursor) => {
                 Ok(cursor.seek(seek_from)?)
@@ -83,6 +79,7 @@ impl Buf for ByteOrderMark {
         }
     }
 
-    get_number!(read_u16, u16, 2);
-    get_number!(read_u32, u32, 4);
+    read_number!(read_u16, u16, 2);
+    read_number!(read_u32, u32, 4);
+    read_number!(read_u64, u64, 8);
 }

@@ -2,9 +2,9 @@
 //!
 //! See http://mk8.tockdom.com/wiki/BFRES_(File_Format)
 
-use crate::{read_i32, read_u16, read_u32, ByteOrderMark, Error};
+use crate::{ByteOrderMark, Error, BNTX};
 
-use std::convert::{TryFrom, TryInto};
+use std::io::SeekFrom;
 
 #[derive(Clone, Debug)]
 pub struct Bfres {
@@ -15,49 +15,98 @@ pub struct Bfres {
 pub struct BfresHeader {
     version_number: u32,
     bom: ByteOrderMark,
-    file_length: u32,
-    file_alignment: u32,
-    file_name_offset: i32,
-    string_table_length: i32,
-    string_table_offset: i32,
-    file_offsets: [i32; 12],
-    file_counts: [u16; 12],
+    byte_alignment: u8,
+    file_name_offset: u32,
+    flags: u16,
+    block_offset: u16,
+    relocation_table_offset: u32,
+    bfres_size: u32,
+    file_name_length_offset: u64,
+    embedded_files_offset: u64,
+    embedded_files_dictionary_offset: u64,
+    embedded_files_data_offset: u64,
+    embedded_files_data_size: u64,
+    embedded_files_count: u32,
+    string_table_offset: u64,
+    string_table_size: u32,
+    embedded_files: Vec<EmbeddedFile>,
 }
 
 impl Bfres {
     pub fn new(buffer: &[u8]) -> Result<Bfres, Error> {
-        let bom = ByteOrderMark::try_from(read_u16(buffer, 0x6, ByteOrderMark::BigEndian))?;
-        let version_number = read_u32(buffer, 0x4, bom);
-        let file_length = read_u32(buffer, 0xC, bom);
-        let file_alignment = read_u32(buffer, 0x10, bom);
-        let file_name_offset = read_i32(buffer, 0x14, bom);
-        let string_table_length = read_i32(buffer, 0x18, bom);
-        let string_table_offset = read_i32(buffer, 0x1C, bom);
-        let file_offsets = (0..12)
-            .map(|i| read_i32(buffer, 0x20 + 4 * i, bom))
-            .collect::<Vec<_>>()
-            .as_slice()
-            .try_into()?;
-        let file_counts = (0..12)
-            .map(|i| read_u16(buffer, 0x50 + 2 * i, bom))
-            .collect::<Vec<_>>()
-            .as_slice()
-            .try_into()?;
+        let mut bom = ByteOrderMark::try_new(
+            buffer.to_vec(),
+            u16::from_be_bytes([buffer[0xC], buffer[0xD]]),
+        )?;
+        bom.set_position(8);
+        let version_number = bom.read_u32()?;
+        let byte_alignment = buffer[0xE];
+        bom.seek(SeekFrom::Current(4))?;
+        let file_name_offset = bom.read_u32()?;
+        let flags = bom.read_u16()?;
+        let block_offset = bom.read_u16()?;
+        let relocation_table_offset = bom.read_u32()?;
+        let bfres_size = bom.read_u32()?;
+        let file_name_length_offset = bom.read_u64()?;
+
+        bom.set_position(0xB8);
+        let embedded_files_offset = bom.read_u64()?;
+        let embedded_files_dictionary_offset = bom.read_u64()?;
+
+        bom.seek(SeekFrom::Current(8))?;
+        let string_table_offset = bom.read_u64()?;
+        let string_table_size = bom.read_u32()?;
+
+        bom.set_position(embedded_files_offset);
+        let embedded_files_data_offset = bom.read_u64()?;
+        let embedded_files_data_size = bom.read_u64()?;
+        bom.set_position(embedded_files_dictionary_offset + 4);
+        let embedded_files_count = bom.read_u32()?;
+        dbg!(embedded_files_count);
+
+        let mut embedded_files = vec![];
+        for n in 0..embedded_files_count {
+            let offset = embedded_files_data_offset + n as u64 * embedded_files_data_size;
+            let data = &buffer[offset as usize..(offset + embedded_files_data_size) as usize];
+
+            let file = match std::str::from_utf8(&data[..4])? {
+                "BNTX" => {
+                    dbg!();
+                    EmbeddedFile::BNTX(BNTX::try_new(data)?)
+                }
+                _ => continue,
+            };
+
+            embedded_files.push(file)
+        }
 
         Ok(Bfres {
             header: BfresHeader {
                 version_number,
                 bom,
-                file_length,
-                file_alignment,
+                byte_alignment,
                 file_name_offset,
-                string_table_length,
+                flags,
+                block_offset,
+                relocation_table_offset,
+                bfres_size,
+                file_name_length_offset,
+                embedded_files_offset,
+                embedded_files_dictionary_offset,
+                embedded_files_data_offset,
+                embedded_files_data_size,
+                embedded_files_count,
                 string_table_offset,
-                file_offsets,
-                file_counts,
+                string_table_size,
+                embedded_files,
             },
         })
     }
+}
+
+#[derive(Clone, Debug)]
+pub enum EmbeddedFile {
+    BNTX(BNTX),
 }
 
 #[cfg(test)]
@@ -68,10 +117,10 @@ mod tests {
     static M1_PLAYER_MARIOMDL: &[u8] = include_bytes!("../../assets/M1_Player_MarioMdl.bfres");
 
     #[test_case(M1_PLAYER_MARIOMDL; "with M1 Player MarioMdl")]
-    fn test_read_sarc(bfres_file: &[u8]) {
+    fn test_read_bfres(bfres_file: &[u8]) {
         let bfres_file = Bfres::new(bfres_file);
-        // dbg!(bfres_file.clone().unwrap());
+        dbg!(bfres_file.as_ref().unwrap());
 
-        assert!(bfres_file.is_ok());
+        // assert!(bfres_file.is_ok());
     }
 }

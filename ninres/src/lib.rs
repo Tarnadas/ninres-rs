@@ -60,12 +60,16 @@ mod error;
 #[cfg(feature = "bfres")]
 pub mod bfres;
 
+// TODO feature flag
+pub mod bntx;
+
 #[cfg(feature = "sarc")]
 pub mod sarc;
 
 #[cfg(feature = "bfres")]
 pub use bfres::*;
-pub use bom::{Buf, ByteOrderMark};
+pub use bntx::*;
+pub use bom::ByteOrderMark;
 pub use error::NinResError;
 #[cfg(feature = "sarc")]
 pub use sarc::*;

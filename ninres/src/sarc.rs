@@ -4,7 +4,7 @@
 
 #[cfg(feature = "tar")]
 use crate::IntoTar;
-use crate::{Buf, ByteOrderMark, Error};
+use crate::{ByteOrderMark, Error};
 
 #[cfg(any(feature = "tar", feature = "zstd"))]
 use std::io::Cursor;

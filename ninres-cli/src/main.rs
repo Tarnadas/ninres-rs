@@ -1,5 +1,5 @@
 use color_eyre::eyre::Result;
-use ninres::{NinRes, NinResFile, Sarc};
+use ninres::{Bfres, NinRes, NinResFile, Sarc};
 use std::{
     fs::{self, read},
     path::PathBuf,
@@ -39,7 +39,9 @@ fn main() -> Result<()> {
             let ninres = buffer.as_ninres()?;
 
             match &ninres {
-                NinResFile::Bfres(_bfres) => {}
+                NinResFile::Bfres(bfres) => {
+                    extract_bfres(bfres);
+                }
                 NinResFile::Sarc(sarc) => {
                     extract_sarc(sarc, extract_options.output)?;
                 }
@@ -51,6 +53,11 @@ fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+fn extract_bfres(bfres: &Bfres) {
+    // bfres.
+    todo!()
 }
 
 fn extract_sarc(sarc: &Sarc, out_path: PathBuf) -> Result<()> {

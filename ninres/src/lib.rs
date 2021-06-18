@@ -54,6 +54,7 @@ extern crate tar_crate as tar;
 #[macro_use]
 extern crate cfg_if;
 
+mod bom;
 mod error;
 
 #[cfg(feature = "bfres")]
@@ -61,32 +62,21 @@ pub mod bfres;
 
 #[cfg(feature = "sarc")]
 pub mod sarc;
-#[cfg(any(feature = "bfres", feature = "sarc"))]
-mod util;
 
 #[cfg(feature = "bfres")]
 pub use bfres::*;
+pub use bom::{Buf, ByteOrderMark};
 pub use error::NinResError;
-use num_enum::TryFromPrimitive;
 #[cfg(feature = "sarc")]
 pub use sarc::*;
-#[cfg(any(feature = "bfres", feature = "sarc"))]
-pub(crate) use util::*;
 
 #[cfg(any(feature = "bfres", feature = "sarc", feature = "tar"))]
 pub(crate) type Error = NinResError;
 #[cfg(any(feature = "bfres", feature = "sarc"))]
 pub type NinResResult = Result<NinResFile, Error>;
 
-#[derive(Clone, Copy, Debug, TryFromPrimitive)]
-#[repr(u16)]
-pub enum ByteOrderMark {
-    BigEndian = 0xfeff,
-    LittleEndian = 0xfffe,
-}
-
 #[cfg(any(feature = "bfres", feature = "sarc"))]
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum NinResFile {
     #[cfg(feature = "bfres")]
     Bfres(bfres::Bfres),

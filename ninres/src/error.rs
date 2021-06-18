@@ -1,6 +1,3 @@
-use super::*;
-
-use num_enum::TryFromPrimitiveError;
 use std::{array::TryFromSliceError, str::Utf8Error, string::FromUtf8Error};
 use thiserror::Error;
 
@@ -22,12 +19,6 @@ pub enum NinResError {
     #[cfg(feature = "zstd")]
     #[error("ZSTD error: {0}")]
     ZstdError(String),
-}
-
-impl<'a> From<TryFromPrimitiveError<ByteOrderMark>> for NinResError {
-    fn from(_: TryFromPrimitiveError<ByteOrderMark>) -> Self {
-        Self::ByteOrderInvalid
-    }
 }
 
 impl<'a> From<FromUtf8Error> for NinResError {

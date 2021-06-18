@@ -4,12 +4,11 @@
 
 #[cfg(feature = "tar")]
 use crate::IntoTar;
-use crate::{read_u16, read_u32, ByteOrderMark, Error};
-
-use std::convert::TryFrom;
+use crate::{Buf, ByteOrderMark, Error};
 
 #[cfg(any(feature = "tar", feature = "zstd"))]
 use std::io::Cursor;
+use std::io::SeekFrom;
 
 #[derive(Clone, Debug)]
 pub struct Sarc {
@@ -57,17 +56,21 @@ impl SfatNode {
 
 impl Sarc {
     pub fn new(buffer: &[u8]) -> Result<Sarc, Error> {
-        let byte_order = ByteOrderMark::try_from(read_u16(buffer, 0x6, ByteOrderMark::BigEndian))?;
-        let file_size = read_u32(buffer, 0x8, byte_order);
-        let data_offset = read_u32(buffer, 0xC, byte_order);
-        let version_number = read_u16(buffer, 0x10, byte_order);
-        let node_count = read_u16(buffer, 0x14 + 0x6, byte_order);
+        let mut bom =
+            ByteOrderMark::try_new(buffer.to_vec(), u16::from_be_bytes([buffer[6], buffer[7]]))?;
+        bom.set_position(8);
+        let file_size = bom.read_u32()?;
+        let data_offset = bom.read_u32()?;
+        let version_number = bom.read_u16()?;
+        bom.seek(SeekFrom::Current(8))?;
+        let node_count = bom.read_u16()?;
         let mut sfat_nodes = vec![];
         let file_name_table_offset = (0x14 + 0xC + node_count as u32 * 0x10) as usize;
         for i in 0..node_count {
-            let offset = (0x14 + 0xC + i * 0x10) as usize;
-            let hash = read_u32(buffer, offset, byte_order);
-            let attributes = read_u32(buffer, offset + 0x4, byte_order);
+            let offset = (0x14 + 0xC + i * 0x10) as u64;
+            bom.set_position(offset);
+            let hash = bom.read_u32()?;
+            let attributes = bom.read_u32()?;
             let name_table_offset = if attributes & 0xffff0000 == 0x01000000 {
                 Some((attributes & 0x0000ffff) * 4)
             } else {
@@ -83,8 +86,8 @@ impl Sarc {
             } else {
                 None
             };
-            let data_start_offset = read_u32(buffer, offset + 0x8, byte_order);
-            let data_end_offset = read_u32(buffer, offset + 0xC, byte_order);
+            let data_start_offset = bom.read_u32()?;
+            let data_end_offset = bom.read_u32()?;
             let data = &buffer[(data_offset + data_start_offset) as usize
                 ..(data_offset + data_end_offset) as usize];
             sfat_nodes.push(SfatNode {
@@ -112,7 +115,7 @@ impl Sarc {
         }
         Ok(Sarc {
             header: SarcHeader {
-                byte_order,
+                byte_order: bom,
                 file_size,
                 data_offset,
                 version_number,

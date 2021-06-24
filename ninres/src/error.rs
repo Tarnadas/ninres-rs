@@ -9,6 +9,8 @@ pub enum NinResError {
     IoError(#[from] std::io::Error),
     #[error("Byte order invalid")]
     ByteOrderInvalid,
+    #[error("CorruptData")]
+    CorruptData,
     #[error(transparent)]
     TryFromSlice(#[from] TryFromSliceError),
     #[error(transparent)]

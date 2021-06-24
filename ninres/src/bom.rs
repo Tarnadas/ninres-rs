@@ -34,6 +34,17 @@ impl ByteOrderMark {
 }
 
 macro_rules! read_number {
+    ( $func:ident, $num:ty, 1 ) => {
+        pub fn $func(&mut self) -> Result<$num, Error> {
+            match self {
+                Self::BigEndian(cursor) | Self::LittleEndian(cursor) => {
+                    let res = cursor.get_ref()[cursor.position() as usize];
+                    cursor.seek(SeekFrom::Current(1))?;
+                    Ok(res)
+                }
+            }
+        }
+    };
     ( $func:ident, $num:ty, $bytes:expr ) => {
         pub fn $func(&mut self) -> Result<$num, Error> {
             match self {
@@ -79,7 +90,11 @@ impl ByteOrderMark {
         }
     }
 
+    read_number!(read_u8, u8, 1);
     read_number!(read_u16, u16, 2);
     read_number!(read_u32, u32, 4);
     read_number!(read_u64, u64, 8);
+    read_number!(read_i16, i16, 2);
+    read_number!(read_i32, i32, 4);
+    read_number!(read_i64, i64, 8);
 }

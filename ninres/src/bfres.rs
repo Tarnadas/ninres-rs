@@ -8,11 +8,6 @@ use std::io::SeekFrom;
 
 #[derive(Clone, Debug)]
 pub struct Bfres {
-    header: BfresHeader,
-}
-
-#[derive(Clone, Debug)]
-pub struct BfresHeader {
     version_number: u32,
     bom: ByteOrderMark,
     byte_alignment: u8,
@@ -29,7 +24,7 @@ pub struct BfresHeader {
     embedded_files_count: u32,
     string_table_offset: u64,
     string_table_size: u32,
-    embedded_files: Vec<EmbeddedFile>,
+    pub embedded_files: Vec<EmbeddedFile>,
 }
 
 impl Bfres {
@@ -62,7 +57,6 @@ impl Bfres {
         let embedded_files_data_size = bom.read_u64()?;
         bom.set_position(embedded_files_dictionary_offset + 4);
         let embedded_files_count = bom.read_u32()?;
-        dbg!(embedded_files_count);
 
         let mut embedded_files = vec![];
         for n in 0..embedded_files_count {
@@ -70,10 +64,7 @@ impl Bfres {
             let data = &buffer[offset as usize..(offset + embedded_files_data_size) as usize];
 
             let file = match std::str::from_utf8(&data[..4])? {
-                "BNTX" => {
-                    dbg!();
-                    EmbeddedFile::BNTX(BNTX::try_new(data)?)
-                }
+                "BNTX" => EmbeddedFile::BNTX(BNTX::try_new(data)?),
                 _ => continue,
             };
 
@@ -81,25 +72,23 @@ impl Bfres {
         }
 
         Ok(Bfres {
-            header: BfresHeader {
-                version_number,
-                bom,
-                byte_alignment,
-                file_name_offset,
-                flags,
-                block_offset,
-                relocation_table_offset,
-                bfres_size,
-                file_name_length_offset,
-                embedded_files_offset,
-                embedded_files_dictionary_offset,
-                embedded_files_data_offset,
-                embedded_files_data_size,
-                embedded_files_count,
-                string_table_offset,
-                string_table_size,
-                embedded_files,
-            },
+            version_number,
+            bom,
+            byte_alignment,
+            file_name_offset,
+            flags,
+            block_offset,
+            relocation_table_offset,
+            bfres_size,
+            file_name_length_offset,
+            embedded_files_offset,
+            embedded_files_dictionary_offset,
+            embedded_files_data_offset,
+            embedded_files_data_size,
+            embedded_files_count,
+            string_table_offset,
+            string_table_size,
+            embedded_files,
         })
     }
 }

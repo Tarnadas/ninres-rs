@@ -54,6 +54,9 @@ extern crate tar_crate as tar;
 #[macro_use]
 extern crate cfg_if;
 
+#[macro_use]
+extern crate derivative;
+
 mod bom;
 mod error;
 

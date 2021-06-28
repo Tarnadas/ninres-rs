@@ -1,6 +1,9 @@
+mod util;
+
 use crate::{ByteOrderMark, Error};
 
-use std::{collections::HashMap, convert::TryFrom, io::SeekFrom};
+use std::{cmp, collections::HashMap, convert::TryFrom, io::SeekFrom};
+use util::*;
 
 #[derive(Clone, Debug)]
 pub struct BNTX {
@@ -10,7 +13,7 @@ pub struct BNTX {
     texture_data_offset: i64,
     texture_dict_offset: i64,
     string_table_entries: HashMap<u64, StringTableEntry>,
-    textures: Vec<Texture>,
+    pub textures: Vec<Texture>,
 }
 
 #[derive(Clone, Debug)]
@@ -30,7 +33,8 @@ pub struct StringTableEntry {
     string: String,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Derivative)]
+#[derivative(Debug)]
 pub struct Texture {
     flags: u8,
     dim: u8,
@@ -40,8 +44,8 @@ pub struct Texture {
     sample_count: u16,
     format: u32,
     access_flags: u32,
-    width: u32,
-    height: u32,
+    pub width: u32,
+    pub height: u32,
     depth: u32,
     array_length: u32,
     texture_layout: u32,
@@ -50,7 +54,17 @@ pub struct Texture {
     alignment: u32,
     channel_type: u32,
     surface_dim: u8,
-    name: String,
+    pub name: String,
+    parent_offset: u64,
+    ptr_offset: u64,
+    user_data_offset: u64,
+    tex_ptr: u64,
+    tex_view: u64,
+    desc_slot_data_offset: u64,
+    user_dict_offset: u64,
+    mip_offsets: Vec<u64>,
+    #[derivative(Debug = "ignore")]
+    pub texture_data: Vec<Vec<Vec<u8>>>,
 }
 
 impl BNTX {
@@ -130,6 +144,79 @@ impl BNTX {
                 .string
                 .clone();
 
+            let parent_offset = bom.read_u64()?;
+            let ptr_offset = bom.read_u64()?;
+            let user_data_offset = bom.read_u64()?;
+            let tex_ptr = bom.read_u64()?;
+            let tex_view = bom.read_u64()?;
+            let desc_slot_data_offset = bom.read_u64()?;
+            let user_dict_offset = bom.read_u64()?;
+
+            let mut mip_offsets = Vec::with_capacity(mip_count as usize);
+            bom.set_position(ptr_offset);
+            let first_mip_offset = bom.read_u64()?;
+            mip_offsets.push(0);
+            for _ in 1..mip_count {
+                mip_offsets.push(bom.read_u64()? - first_mip_offset);
+            }
+
+            let mut texture_data = Vec::with_capacity(array_length as usize);
+            bom.set_position(first_mip_offset);
+
+            let (blk_width, blk_height) =
+                if let Some((w, h)) = BLK_DIMS.lock().unwrap().get(&(format >> 8)) {
+                    (*w, *h)
+                } else {
+                    (1, 1)
+                };
+            let bpp = *BPPS.lock().unwrap().get(&(format >> 8)).unwrap();
+            let target = true; // "NX "
+
+            let block_height_log2 = texture_layout & 7;
+            let lines_per_block_height = (1 << block_height_log2) * 8;
+            let mut block_height_shift = 0;
+
+            for _ in 0..array_length {
+                let mut mips = Vec::with_capacity(mip_count as usize);
+                for (mip_level, mip_offset) in mip_offsets.iter().enumerate() {
+                    // TODO fix mip levels
+                    if mip_level > 0 {
+                        continue;
+                    }
+                    // dbg!(mip_level);
+                    let size = (image_size as u64 - mip_offset) / array_length as u64;
+                    let buffer = (buffer
+                        [bom.position() as usize..(bom.position() + size) as usize])
+                        .to_vec();
+                    bom.seek(SeekFrom::Current(buffer.len() as i64))?;
+
+                    let width = cmp::max(1, width >> mip_level);
+                    let height = cmp::max(1, height >> mip_level);
+                    // let depth = cmp::max(1, depth >> mip_level);
+
+                    // let size =
+                    //     div_round_up(width, blk_width) * div_round_up(height, blk_height) * bpp;
+
+                    if pow2_round_up(div_round_up(height, blk_height)) < lines_per_block_height {
+                        block_height_shift += 1;
+                    }
+
+                    let buffer = deswizzle(
+                        width,
+                        height,
+                        blk_width,
+                        blk_height,
+                        target,
+                        bpp,
+                        tile_mode,
+                        cmp::max(0, block_height_log2 - block_height_shift),
+                        buffer,
+                    )?;
+                    mips.push(buffer);
+                }
+                texture_data.push(mips);
+            }
+
             textures.push(Texture {
                 flags,
                 dim,
@@ -150,15 +237,16 @@ impl BNTX {
                 channel_type,
                 surface_dim,
                 name,
+                parent_offset,
+                ptr_offset,
+                user_data_offset,
+                tex_ptr,
+                tex_view,
+                desc_slot_data_offset,
+                user_dict_offset,
+                mip_offsets,
+                texture_data,
             });
-
-            // long ParentOffset = loader.ReadInt64();
-            // long PtrOffset = loader.ReadInt64();
-            // long UserDataOffset = loader.ReadInt64();
-            // long TexPtr = loader.ReadInt64();
-            // long TexView = loader.ReadInt64();
-            // long descSlotDataOffset = loader.ReadInt64();
-            // UserDataDict = loader.LoadDict();
         }
 
         let header = BNTXHeader {

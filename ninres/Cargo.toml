@@ -13,6 +13,8 @@ categories = ["game-development", "parser-implementations", "wasm"]
 [dependencies]
 byteorder = "1"
 cfg-if = "1"
+derivative = { version = "2", features = ["use_core"] }
+once_cell = "1"
 ruzstd = { version = "0.2", optional = true }
 tar_crate = { package = "tar", version = "0.4", optional = true }
 thiserror = "1"

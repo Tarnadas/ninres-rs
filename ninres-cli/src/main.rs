@@ -1,6 +1,8 @@
 use color_eyre::eyre::Result;
-use ninres::{Bfres, NinRes, NinResFile, Sarc};
+use image::{DynamicImage, ImageBuffer};
+use ninres::{Bfres, EmbeddedFile, NinRes, NinResFile, Sarc};
 use std::{
+    cmp,
     fs::{self, read},
     path::PathBuf,
 };
@@ -40,7 +42,7 @@ fn main() -> Result<()> {
 
             match &ninres {
                 NinResFile::Bfres(bfres) => {
-                    extract_bfres(bfres);
+                    extract_bfres(bfres, extract_options.output)?;
                 }
                 NinResFile::Sarc(sarc) => {
                     extract_sarc(sarc, extract_options.output)?;
@@ -55,9 +57,40 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn extract_bfres(bfres: &Bfres) {
-    // bfres.
-    todo!()
+fn extract_bfres(bfres: &Bfres, out_path: PathBuf) -> Result<()> {
+    for file in bfres.embedded_files.iter() {
+        match file {
+            EmbeddedFile::BNTX(bntx) => {
+                for texture in bntx.textures.iter() {
+                    for (tex_count, mips) in texture.texture_data.iter().enumerate() {
+                        for (mip_level, mip) in mips.iter().enumerate() {
+                            let width = cmp::max(1, texture.width >> mip_level);
+                            let height = cmp::max(1, texture.height >> mip_level);
+                            let buf = if let Some(image) =
+                                ImageBuffer::from_raw(width, height, mip.clone())
+                            {
+                                image
+                            } else {
+                                // TODO ?
+                                continue;
+                            };
+                            let image = DynamicImage::ImageRgba8(buf);
+
+                            let mut path = out_path.clone();
+                            if !path.exists() {
+                                fs::create_dir(path.clone())?;
+                            }
+                            path.push(&format!("{}_{}_{}.png", texture.name, tex_count, mip_level));
+                            if let Err(_err) = image.save(&path) {
+                                // TODO
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Ok(())
 }
 
 fn extract_sarc(sarc: &Sarc, out_path: PathBuf) -> Result<()> {
@@ -81,11 +114,19 @@ fn extract_sarc(sarc: &Sarc, out_path: PathBuf) -> Result<()> {
 
                 if let Ok(file) = data.as_ninres() {
                     path.set_extension(file.get_extension().to_string());
-                    if let NinResFile::Sarc(sarc) = &file {
-                        let mut base_path = path.clone();
-                        base_path.pop();
-                        base_path.push(path.file_stem().unwrap());
-                        extract_sarc(sarc, base_path)?;
+                    match &file {
+                        NinResFile::Bfres(bfres) => {
+                            let mut base_path = path.clone();
+                            base_path.pop();
+                            base_path.push(path.file_stem().unwrap());
+                            extract_bfres(bfres, base_path)?;
+                        }
+                        NinResFile::Sarc(sarc) => {
+                            let mut base_path = path.clone();
+                            base_path.pop();
+                            base_path.push(path.file_stem().unwrap());
+                            extract_sarc(sarc, base_path)?;
+                        }
                     }
                 }
                 fs::write(path, data)?;

@@ -16,6 +16,7 @@ path = "src/main.rs"
 
 [dependencies]
 color-eyre = "0.5"
+image = { version = "0.23", default-features = false, features = ["png"] }
 ninres = { version = "0.0", path = "../ninres", features = ["bfres", "sarc", "tar", "zstd"] }
 structopt = "0.3"
 

@@ -179,23 +179,17 @@ impl BNTX {
             for _ in 0..array_length {
                 let mut mips = Vec::with_capacity(mip_count as usize);
                 for (mip_level, mip_offset) in mip_offsets.iter().enumerate() {
-                    // TODO fix mip levels
-                    if mip_level > 0 {
-                        continue;
-                    }
-                    // dbg!(mip_level);
                     let size = (image_size as u64 - mip_offset) / array_length as u64;
+                    bom.set_position(first_mip_offset + *mip_offset);
                     let buffer = (buffer
                         [bom.position() as usize..(bom.position() + size) as usize])
                         .to_vec();
-                    bom.seek(SeekFrom::Current(buffer.len() as i64))?;
 
                     let width = cmp::max(1, width >> mip_level);
                     let height = cmp::max(1, height >> mip_level);
-                    // let depth = cmp::max(1, depth >> mip_level);
 
-                    // let size =
-                    //     div_round_up(width, blk_width) * div_round_up(height, blk_height) * bpp;
+                    let size =
+                        div_round_up(width, blk_width) * div_round_up(height, blk_height) * bpp;
 
                     if pow2_round_up(div_round_up(height, blk_height)) < lines_per_block_height {
                         block_height_shift += 1;
@@ -209,10 +203,12 @@ impl BNTX {
                         target,
                         bpp,
                         tile_mode,
-                        cmp::max(0, block_height_log2 - block_height_shift),
+                        (block_height_log2)
+                            .checked_sub(block_height_shift)
+                            .unwrap_or_default(),
                         buffer,
                     )?;
-                    mips.push(buffer);
+                    mips.push(buffer[..size as usize].to_vec());
                 }
                 texture_data.push(mips);
             }

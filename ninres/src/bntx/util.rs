@@ -113,6 +113,15 @@ pub fn get_addr_block_linear(
         + (x % 16)
 }
 
+#[allow(unused)]
+pub fn get_block_height(height: u32) -> u32 {
+    let mut block_height = pow2_round_up(height / 8);
+    if block_height > 16 {
+        block_height = 16;
+    }
+    block_height
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn deswizzle(
     width: u32,

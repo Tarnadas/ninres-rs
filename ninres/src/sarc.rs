@@ -6,15 +6,19 @@
 use crate::IntoTar;
 use crate::{ByteOrderMark, Error};
 
+use js_sys::JsString;
 #[cfg(any(feature = "tar", feature = "zstd"))]
 use std::io::Cursor;
 use std::io::SeekFrom;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
 
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 #[derive(Clone, Debug)]
 pub struct Sarc {
-    pub header: SarcHeader,
-    pub sfat_header: SfatHeader,
-    pub sfat_nodes: Vec<SfatNode>,
+    header: SarcHeader,
+    sfat_header: SfatHeader,
+    sfat_nodes: Vec<SfatNode>,
 }
 
 #[derive(Clone, Debug)]
@@ -30,17 +34,18 @@ pub struct SfatHeader {
     pub node_count: u16,
 }
 
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 #[derive(Clone, Debug)]
 pub struct SfatNode {
     pub hash: u32,
     pub attributes: u32,
     pub path_table_offset: Option<u32>,
-    pub path: Option<String>,
+    path: Option<String>,
     pub data_start_offset: u32,
     pub data_end_offset: u32,
-    pub data: Vec<u8>,
+    data: Vec<u8>,
     #[cfg(feature = "zstd")]
-    pub data_decompressed: Option<Vec<u8>>,
+    data_decompressed: Option<Vec<u8>>,
 }
 
 impl SfatNode {
@@ -55,6 +60,11 @@ impl SfatNode {
 }
 
 impl Sarc {
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn get_sfat_nodes(&self) -> Vec<SfatNode> {
+        self.sfat_nodes.map(|n| n.into())
+    }
+
     pub fn new(buffer: &[u8]) -> Result<Sarc, Error> {
         let mut bom =
             ByteOrderMark::try_new(buffer.to_vec(), u16::from_be_bytes([buffer[6], buffer[7]]))?;
@@ -126,6 +136,20 @@ impl Sarc {
     }
 }
 
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+impl Sarc {
+    #[wasm_bindgen(js_name = getSfatNodes)]
+    pub fn get_sfat_nodes(&self) -> Box<[JsValue]> {
+        self.sfat_nodes.iter().cloned().map(|n| n.into()).collect()
+    }
+
+    #[wasm_bindgen(js_name = intoSfatNodes)]
+    pub fn into_sfat_nodes(self) -> Box<[JsValue]> {
+        self.sfat_nodes.into_iter().map(|n| n.into()).collect()
+    }
+}
+
 #[cfg(feature = "tar")]
 impl IntoTar for Sarc {
     fn into_tar(self, mode: u32) -> Result<Cursor<Vec<u8>>, Error> {
@@ -166,6 +190,15 @@ impl IntoTar for Sarc {
             })?;
         builder.finish()?;
         Ok(builder.into_inner()?)
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+impl SfatNode {
+    #[wasm_bindgen(js_name = getPath)]
+    pub fn get_path(&self) -> Option<JsString> {
+        self.path.clone().map(|p| p.into())
     }
 }
 

@@ -1,5 +1,7 @@
 use std::{array::TryFromSliceError, str::Utf8Error, string::FromUtf8Error};
 use thiserror::Error;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Error)]
 pub enum NinResError {
@@ -26,5 +28,12 @@ pub enum NinResError {
 impl<'a> From<FromUtf8Error> for NinResError {
     fn from(err: FromUtf8Error) -> Self {
         Self::Utf8(err.utf8_error())
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+impl From<NinResError> for JsValue {
+    fn from(err: NinResError) -> JsValue {
+        JsValue::from(format!("{}", err))
     }
 }

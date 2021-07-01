@@ -2,20 +2,26 @@ mod util;
 
 use crate::{ByteOrderMark, Error};
 
+#[cfg(target_arch = "wasm32")]
+use js_sys::JsString;
 use std::{cmp, collections::HashMap, convert::TryFrom, io::SeekFrom};
 use util::*;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
 
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 #[derive(Clone, Debug)]
 pub struct BNTX {
-    pub header: BNTXHeader,
+    header: BNTXHeader,
     texture_count: i32,
     texture_array_offset: i64,
     texture_data_offset: i64,
     texture_dict_offset: i64,
     string_table_entries: HashMap<u64, StringTableEntry>,
-    pub textures: Vec<Texture>,
+    textures: Vec<Texture>,
 }
 
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 #[derive(Clone, Debug)]
 pub struct BNTXHeader {
     alignment: u8,
@@ -33,6 +39,7 @@ pub struct StringTableEntry {
     string: String,
 }
 
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 #[derive(Clone, Derivative)]
 #[derivative(Debug)]
 pub struct Texture {
@@ -54,7 +61,7 @@ pub struct Texture {
     alignment: u32,
     channel_type: u32,
     surface_dim: u8,
-    pub name: String,
+    name: String,
     parent_offset: u64,
     ptr_offset: u64,
     user_data_offset: u64,
@@ -64,7 +71,7 @@ pub struct Texture {
     user_dict_offset: u64,
     mip_offsets: Vec<u64>,
     #[derivative(Debug = "ignore")]
-    pub texture_data: Vec<Vec<Vec<u8>>>,
+    texture_data: Vec<Vec<Vec<u8>>>,
 }
 
 impl BNTX {
@@ -190,6 +197,9 @@ impl BNTX {
 
                     let size =
                         div_round_up(width, blk_width) * div_round_up(height, blk_height) * bpp;
+                    dbg!(size);
+                    #[cfg(target_arch = "wasm32")]
+                    web_sys::console::log_2(&"size".into(), &size.into());
 
                     if pow2_round_up(div_round_up(height, blk_height)) < lines_per_block_height {
                         block_height_shift += 1;
@@ -263,5 +273,95 @@ impl BNTX {
             string_table_entries,
             textures,
         })
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn get_textures(&self) -> &Vec<Texture> {
+        &self.textures
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+impl BNTX {
+    #[wasm_bindgen(js_name = getTextures)]
+    pub fn get_textures(&self) -> Box<[JsValue]> {
+        self.textures
+            .clone()
+            .into_iter()
+            .map(|t| t.into())
+            .collect()
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl Texture {
+    pub fn get_name(&self) -> &String {
+        &self.name
+    }
+
+    pub fn get_texture_data(&self) -> &Vec<Vec<Vec<u8>>> {
+        &self.texture_data
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+impl Texture {
+    #[wasm_bindgen(js_name = getName)]
+    pub fn get_name(&self) -> JsString {
+        self.name.clone().into()
+    }
+
+    #[wasm_bindgen(js_name = getTextureData)]
+    pub fn get_texture_data(&self, tex_count: usize, mip_level: usize) -> Option<Box<[u8]>> {
+        self.texture_data
+            .get(tex_count)
+            .map(|d| d.get(mip_level))
+            .flatten()
+            .cloned()
+            .map(|d| {
+                web_sys::console::log_1(&format!("{}", d.len()).into());
+                d.into_boxed_slice()
+            })
+    }
+
+    #[wasm_bindgen(js_name = getTexCount)]
+    pub fn get_tex_count(&self) -> usize {
+        self.texture_data.len()
+    }
+
+    #[wasm_bindgen(js_name = getMipLevel)]
+    pub fn get_mip_level(&self, tex_count: usize) -> Option<usize> {
+        self.texture_data.get(tex_count).map(|d| d.len())
+    }
+
+    #[cfg(feature = "png")]
+    #[wasm_bindgen(js_name = asPng)]
+    pub fn as_png(&self, tex_count: usize, mip_level: usize) -> Option<Box<[u8]>> {
+        use image::{DynamicImage, ImageBuffer, ImageOutputFormat};
+
+        let width = cmp::max(1, self.width >> mip_level);
+        let height = cmp::max(1, self.height >> mip_level);
+        if let Some(buf) = self
+            .texture_data
+            .get(tex_count)
+            .map(|d| d.get(mip_level))
+            .flatten()
+        {
+            if let Some(buf) = ImageBuffer::from_raw(width, height, buf.clone()) {
+                let image = DynamicImage::ImageRgba8(buf);
+                let mut res = vec![];
+                if let Err(err) = image.write_to(&mut res, ImageOutputFormat::Png) {
+                    web_sys::console::error_1(&format!("asPng threw an error: {}", err).into());
+                    return None;
+                }
+                Some(res.into_boxed_slice())
+            } else {
+                None
+            }
+        } else {
+            None
+        }
     }
 }

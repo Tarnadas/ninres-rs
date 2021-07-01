@@ -58,11 +58,11 @@ fn main() -> Result<()> {
 }
 
 fn extract_bfres(bfres: &Bfres, out_path: PathBuf) -> Result<()> {
-    for file in bfres.embedded_files.iter() {
+    for file in bfres.get_embedded_files().iter() {
         match file {
             EmbeddedFile::BNTX(bntx) => {
-                for texture in bntx.textures.iter() {
-                    for (tex_count, mips) in texture.texture_data.iter().enumerate() {
+                for texture in bntx.get_textures().iter() {
+                    for (tex_count, mips) in texture.get_texture_data().iter().enumerate() {
                         for (mip_level, mip) in mips.iter().enumerate() {
                             let width = cmp::max(1, texture.width >> mip_level);
                             let height = cmp::max(1, texture.height >> mip_level);
@@ -80,7 +80,12 @@ fn extract_bfres(bfres: &Bfres, out_path: PathBuf) -> Result<()> {
                             if !path.exists() {
                                 fs::create_dir(path.clone())?;
                             }
-                            path.push(&format!("{}_{}_{}.png", texture.name, tex_count, mip_level));
+                            path.push(&format!(
+                                "{}_{}_{}.png",
+                                texture.get_name(),
+                                tex_count,
+                                mip_level
+                            ));
                             if let Err(_err) = image.save(&path) {
                                 // TODO
                             }

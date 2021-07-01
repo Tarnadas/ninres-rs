@@ -1,5 +1,6 @@
 {
   "editor.formatOnSave": true,
   "rust-analyzer.cargo.allFeatures": true,
-  "rust-analyzer.diagnostics.disabled": ["macro-error"]
+  "rust-analyzer.diagnostics.disabled": ["macro-error", "missing-unsafe"],
+  "rust-analyzer.cargo.target": "wasm32-unknown-unknown"
 }

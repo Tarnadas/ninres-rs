@@ -1,0 +1,12 @@
+{
+  "author": "Mario Reder <mreder1289@gmail.com>",
+  "name": "ninres",
+  "version": "auto",
+  "repository": "https://github.com/Tarnadas/ninres-rs",
+  "license": "MIT",
+  "scripts": {
+    "build:web": "CARGO_PROFILE_RELEASE_OPT_LEVEL=z wasm-pack build --release --target=browser --out-name=ninres ninres -- --all-features",
+    "build:web-dev": "wasm-pack build --dev --target=browser --out-name=ninres ninres -- --all-features",
+    "watch": "cargo watch -w ninres/src -s 'wasm-pack build --dev --target=browser --out-name=ninres ninres -- --all-features'"
+  }
+}

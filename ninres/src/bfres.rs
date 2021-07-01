@@ -5,7 +5,10 @@
 use crate::{ByteOrderMark, Error, BNTX};
 
 use std::io::SeekFrom;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
 
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 #[derive(Clone, Debug)]
 pub struct Bfres {
     version_number: u32,
@@ -24,7 +27,7 @@ pub struct Bfres {
     embedded_files_count: u32,
     string_table_offset: u64,
     string_table_size: u32,
-    pub embedded_files: Vec<EmbeddedFile>,
+    embedded_files: Vec<EmbeddedFile>,
 }
 
 impl Bfres {
@@ -90,6 +93,31 @@ impl Bfres {
             string_table_size,
             embedded_files,
         })
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn get_embedded_files(&self) -> &Vec<EmbeddedFile> {
+        &self.embedded_files
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+impl Bfres {
+    #[wasm_bindgen(js_name = fromBytes)]
+    pub fn from_bytes(buf: &[u8]) -> Result<Bfres, JsValue> {
+        Ok(Bfres::new(buf)?)
+    }
+
+    #[wasm_bindgen(js_name = getBntxFiles)]
+    pub fn get_bntx_files(&self) -> Box<[JsValue]> {
+        self.embedded_files
+            .clone()
+            .into_iter()
+            .map(|t| match t {
+                EmbeddedFile::BNTX(bntx) => bntx.into(),
+            })
+            .collect()
     }
 }
 

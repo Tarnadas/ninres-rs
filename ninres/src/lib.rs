@@ -77,12 +77,16 @@ pub use error::NinResError;
 #[cfg(feature = "sarc")]
 pub use sarc::*;
 
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
+
 #[cfg(any(feature = "bfres", feature = "sarc", feature = "tar"))]
 pub(crate) type Error = NinResError;
 #[cfg(any(feature = "bfres", feature = "sarc"))]
 pub type NinResResult = Result<NinResFile, Error>;
 
 #[cfg(any(feature = "bfres", feature = "sarc"))]
+#[cfg(not(target_arch = "wasm32"))]
 #[derive(Clone, Debug)]
 pub enum NinResFile {
     #[cfg(feature = "bfres")]
@@ -92,6 +96,18 @@ pub enum NinResFile {
 }
 
 #[cfg(any(feature = "bfres", feature = "sarc"))]
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+#[derive(Clone, Debug)]
+pub enum NinResFile {
+    #[cfg(feature = "bfres")]
+    Bfres,
+    #[cfg(feature = "sarc")]
+    Sarc,
+}
+
+#[cfg(any(feature = "bfres", feature = "sarc"))]
+#[cfg(not(target_arch = "wasm32"))]
 impl NinResFile {
     pub fn get_extension(&self) -> &str {
         match self {
@@ -100,6 +116,28 @@ impl NinResFile {
             #[cfg(feature = "sarc")]
             Self::Sarc(_) => "sarc",
         }
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+#[derive(Clone, Debug)]
+pub struct NinResFileExt {
+    file_type: NinResFile,
+    sarc: Option<Sarc>,
+    bfres: Option<Bfres>,
+}
+
+#[wasm_bindgen]
+impl NinResFileExt {
+    #[wasm_bindgen(js_name = getFileType)]
+    pub fn get_file_type(&self) -> NinResFile {
+        self.file_type.clone()
+    }
+
+    #[wasm_bindgen(js_name = getSarc)]
+    pub fn get_sarc(&self) -> Option<Sarc> {
+        self.sarc.clone()
     }
 }
 
@@ -126,12 +164,14 @@ impl NinResFile {
 /// # }
 /// ```
 #[cfg(any(feature = "bfres", feature = "sarc"))]
+#[cfg(not(target_arch = "wasm32"))]
 pub trait NinRes {
     fn as_ninres(&self) -> NinResResult;
     fn into_ninres(self) -> NinResResult;
 }
 
 #[cfg(any(feature = "bfres", feature = "sarc"))]
+#[cfg(not(target_arch = "wasm32"))]
 impl NinRes for &[u8] {
     fn as_ninres(&self) -> NinResResult {
         match std::str::from_utf8(&self[..4])? {
@@ -159,6 +199,7 @@ impl NinRes for &[u8] {
 }
 
 #[cfg(any(feature = "bfres", feature = "sarc"))]
+#[cfg(not(target_arch = "wasm32"))]
 impl NinRes for Vec<u8> {
     fn as_ninres(&self) -> NinResResult {
         match std::str::from_utf8(&self[..4])? {
@@ -181,6 +222,32 @@ impl NinRes for Vec<u8> {
             _ => Err(NinResError::TypeUnknownOrNotImplemented([
                 self[0], self[1], self[2], self[3],
             ])),
+        }
+    }
+}
+
+#[cfg(any(feature = "bfres", feature = "sarc"))]
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+impl NinResFileExt {
+    #[wasm_bindgen(js_name = fromBytes)]
+    pub fn from_bytes(buf: &[u8]) -> Result<NinResFileExt, JsValue> {
+        match std::str::from_utf8(&buf[..4]).map_err(|err| JsValue::from(format!("{}", err)))? {
+            #[cfg(feature = "sarc")]
+            "SARC" => Ok(NinResFileExt {
+                file_type: NinResFile::Sarc,
+                sarc: Some(Sarc::new(buf)?),
+                bfres: None,
+            }),
+            #[cfg(feature = "bfres")]
+            "FRES" => Ok(NinResFileExt {
+                file_type: NinResFile::Bfres,
+                sarc: None,
+                bfres: Some(Bfres::new(buf)?),
+            }),
+            _ => Err(
+                NinResError::TypeUnknownOrNotImplemented([buf[0], buf[1], buf[2], buf[3]]).into(),
+            ),
         }
     }
 }
@@ -210,4 +277,18 @@ impl NinRes for Vec<u8> {
 #[cfg(feature = "tar")]
 pub trait IntoTar {
     fn into_tar(self, mode: u32) -> Result<std::io::Cursor<Vec<u8>>, Error>;
+}
+
+cfg_if! {
+    if #[cfg(target_arch = "wasm32")] {
+        /// Setup panic hook for WebAssembly calls.
+        /// This will forward Rust panics to console.error
+        #[wasm_bindgen(js_name = setupPanicHook)]
+        pub fn setup_panic_hook() {
+            console_error_panic_hook::set_once();
+        }
+
+        #[global_allocator]
+        static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+    }
 }

@@ -20,7 +20,9 @@ You can also enable additional features:
 
 `zstd`: ZSTD decompression.
 
-All features of this crate can be compiled to WebAssembly.
+The library is written in Rust and compiles to WebAssembly for the web or can be used as a standard Rust Crate.
+A live demo running in your browser can be found here:
+https://tarnadas.github.io/ninres-rs/
 
 ### Examples
 

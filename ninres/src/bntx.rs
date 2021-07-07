@@ -198,8 +198,6 @@ impl BNTX {
                     let size =
                         div_round_up(width, blk_width) * div_round_up(height, blk_height) * bpp;
                     dbg!(size);
-                    #[cfg(target_arch = "wasm32")]
-                    web_sys::console::log_2(&"size".into(), &size.into());
 
                     if pow2_round_up(div_round_up(height, blk_height)) < lines_per_block_height {
                         block_height_shift += 1;

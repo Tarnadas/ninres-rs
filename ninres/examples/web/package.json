@@ -18,8 +18,7 @@
   "dependencies": {
     "@geist-ui/react": "^2",
     "react": "^17",
-    "react-dom": "^17",
-    "react-json-view": "^1"
+    "react-dom": "^17"
   },
   "devDependencies": {
     "@babel/core": "^7",

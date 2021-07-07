@@ -139,6 +139,11 @@ impl NinResFileExt {
     pub fn get_sarc(&self) -> Option<Sarc> {
         self.sarc.clone()
     }
+
+    #[wasm_bindgen(js_name = getBfres)]
+    pub fn get_bfres(&self) -> Option<Bfres> {
+        self.bfres.clone()
+    }
 }
 
 /// Smart convert buffer into any known Nintendo file format.

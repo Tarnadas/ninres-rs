@@ -36,7 +36,7 @@ module.exports = {
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.json', '.wasm']
   },
   experiments: {
-    syncWebAssembly: true
+    asyncWebAssembly: true
   },
   module: {
     rules: [

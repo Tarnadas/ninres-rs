@@ -109,10 +109,9 @@ impl Bfres {
         Ok(Bfres::new(buf)?)
     }
 
-    #[wasm_bindgen(js_name = getBntxFiles)]
-    pub fn get_bntx_files(&self) -> Box<[JsValue]> {
+    #[wasm_bindgen(js_name = intoBntxFiles)]
+    pub fn into_bntx_files(self) -> Box<[JsValue]> {
         self.embedded_files
-            .clone()
             .into_iter()
             .map(|t| match t {
                 EmbeddedFile::BNTX(bntx) => bntx.into(),

@@ -200,6 +200,15 @@ impl SfatNode {
     pub fn get_path(&self) -> Option<JsString> {
         self.path.clone().map(|p| p.into())
     }
+
+    #[wasm_bindgen(js_name = intoData)]
+    pub fn into_data(self) -> Box<[u8]> {
+        if let Some(data) = self.data_decompressed {
+            data.into_boxed_slice()
+        } else {
+            self.data.into_boxed_slice()
+        }
+    }
 }
 
 #[cfg(test)]

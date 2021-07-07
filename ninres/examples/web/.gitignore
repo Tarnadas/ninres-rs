@@ -1,1 +1,4 @@
 node_modules
+bundle-report.html
+stats.json
+dist

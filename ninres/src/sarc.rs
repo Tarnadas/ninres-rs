@@ -6,6 +6,7 @@
 use crate::IntoTar;
 use crate::{ByteOrderMark, Error};
 
+#[cfg(target_arch = "wasm32")]
 use js_sys::JsString;
 #[cfg(any(feature = "tar", feature = "zstd"))]
 use std::io::Cursor;
@@ -48,21 +49,10 @@ pub struct SfatNode {
     data_decompressed: Option<Vec<u8>>,
 }
 
-impl SfatNode {
-    fn _get_hash(data: &[u32], length: usize, key: u32) -> u32 {
-        let mut result = 0;
-        #[allow(clippy::needless_range_loop)]
-        for i in 0..length {
-            result = data[i] + result * key;
-        }
-        result
-    }
-}
-
 impl Sarc {
     #[cfg(not(target_arch = "wasm32"))]
-    pub fn get_sfat_nodes(&self) -> Vec<SfatNode> {
-        self.sfat_nodes.map(|n| n.into())
+    pub fn get_sfat_nodes(&self) -> &Vec<SfatNode> {
+        &self.sfat_nodes
     }
 
     pub fn new(buffer: &[u8]) -> Result<Sarc, Error> {
@@ -190,6 +180,30 @@ impl IntoTar for Sarc {
             })?;
         builder.finish()?;
         Ok(builder.into_inner()?)
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl SfatNode {
+    pub fn get_path(&self) -> Option<&String> {
+        self.path.as_ref()
+    }
+
+    pub fn get_data(&self) -> &Vec<u8> {
+        &self.data
+    }
+
+    pub fn get_data_decompressed(&self) -> Option<&Vec<u8>> {
+        self.data_decompressed.as_ref()
+    }
+
+    fn _get_hash(data: &[u32], length: usize, key: u32) -> u32 {
+        let mut result = 0;
+        #[allow(clippy::needless_range_loop)]
+        for i in 0..length {
+            result = data[i] + result * key;
+        }
+        result
     }
 }
 

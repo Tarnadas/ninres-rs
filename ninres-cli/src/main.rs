@@ -99,11 +99,11 @@ fn extract_bfres(bfres: &Bfres, out_path: PathBuf) -> Result<()> {
 }
 
 fn extract_sarc(sarc: &Sarc, out_path: PathBuf) -> Result<()> {
-    sarc.sfat_nodes
+    sarc.get_sfat_nodes()
         .iter()
         .map(move |sfat| -> Result<_> {
             let mut path = out_path.clone();
-            if let Some(sfat_path) = &sfat.path {
+            if let Some(sfat_path) = sfat.get_path() {
                 path.push(sfat_path);
                 let mut folder_path = path.clone();
                 folder_path.pop();
@@ -111,10 +111,10 @@ fn extract_sarc(sarc: &Sarc, out_path: PathBuf) -> Result<()> {
                     fs::create_dir_all(folder_path)?;
                 }
 
-                let data = if let Some(data) = &sfat.data_decompressed {
+                let data = if let Some(data) = sfat.get_data_decompressed() {
                     data
                 } else {
-                    &sfat.data
+                    sfat.get_data()
                 };
 
                 if let Ok(file) = data.as_ninres() {

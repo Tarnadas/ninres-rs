@@ -135,8 +135,8 @@ mod tests {
     #[test_case(M1_PLAYER_MARIOMDL; "with M1 Player MarioMdl")]
     fn test_read_bfres(bfres_file: &[u8]) {
         let bfres_file = Bfres::new(bfres_file);
-        dbg!(bfres_file.as_ref().unwrap());
+        // dbg!(bfres_file.as_ref().unwrap());
 
-        // assert!(bfres_file.is_ok());
+        assert!(bfres_file.is_ok());
     }
 }

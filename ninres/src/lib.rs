@@ -48,22 +48,24 @@
 //! ```
 //!
 
+#[cfg(feature = "tar")]
 extern crate tar_crate as tar;
 
-#[cfg(feature = "tar")]
 #[macro_use]
 extern crate cfg_if;
 
+#[cfg(feature = "bfres")]
 #[macro_use]
 extern crate derivative;
 
+#[cfg(any(feature = "bfres", feature = "sarc"))]
 mod bom;
 mod error;
 
 #[cfg(feature = "bfres")]
 pub mod bfres;
 
-// TODO feature flag
+#[cfg(feature = "bfres")]
 pub mod bntx;
 
 #[cfg(feature = "sarc")]
@@ -71,7 +73,9 @@ pub mod sarc;
 
 #[cfg(feature = "bfres")]
 pub use bfres::*;
+#[cfg(feature = "bfres")]
 pub use bntx::*;
+#[cfg(any(feature = "bfres", feature = "sarc"))]
 pub use bom::ByteOrderMark;
 pub use error::NinResError;
 #[cfg(feature = "sarc")]
@@ -128,6 +132,7 @@ pub struct NinResFileExt {
     bfres: Option<Bfres>,
 }
 
+#[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
 impl NinResFileExt {
     #[wasm_bindgen(js_name = getFileType)]

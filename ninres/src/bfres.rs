@@ -63,8 +63,28 @@ impl Bfres {
 
         let mut embedded_files = vec![];
         for n in 0..embedded_files_count {
-            let offset = embedded_files_data_offset + n as u64 * embedded_files_data_size;
-            let data = &buffer[offset as usize..(offset + embedded_files_data_size) as usize];
+            let offset = if let Some(offset) = u64::checked_add(
+                embedded_files_data_offset,
+                if let Some(x) = u64::checked_mul(n as u64, embedded_files_data_size) {
+                    x
+                } else {
+                    continue;
+                },
+            ) {
+                offset
+            } else {
+                continue;
+            };
+            let end_offset =
+                if let Some(end_offset) = u64::checked_add(offset, embedded_files_data_size) {
+                    end_offset as usize
+                } else {
+                    continue;
+                };
+            if buffer.len() < end_offset {
+                continue;
+            }
+            let data = &buffer[offset as usize..end_offset];
 
             let file = match std::str::from_utf8(&data[..4])? {
                 "BNTX" => EmbeddedFile::BNTX(BNTX::try_new(data)?),

@@ -184,25 +184,61 @@ pub trait NinRes {
 #[cfg(not(target_arch = "wasm32"))]
 impl NinRes for &[u8] {
     fn as_ninres(&self) -> NinResResult {
-        match std::str::from_utf8(&self[..4])? {
+        let decompressed = if b"\x28\xB5\x2F\xFD" == &self[..4] {
+            use std::io::{Cursor, Read};
+            let mut decompressed = vec![];
+            let mut cursor = Cursor::new(self);
+            let mut decoder =
+                ruzstd::StreamingDecoder::new(&mut cursor).map_err(Error::ZstdError)?;
+
+            decoder.read_to_end(&mut decompressed).unwrap();
+            Some(decompressed)
+        } else {
+            None
+        };
+        let data = if let Some(decompressed) = &decompressed {
+            &decompressed[..]
+        } else {
+            self
+        };
+
+        match std::str::from_utf8(&data[..4])? {
             #[cfg(feature = "sarc")]
-            "SARC" => Ok(NinResFile::Sarc(Sarc::new(self)?)),
+            "SARC" => Ok(NinResFile::Sarc(Sarc::new(data)?)),
             #[cfg(feature = "bfres")]
-            "FRES" => Ok(NinResFile::Bfres(Bfres::new(self)?)),
+            "FRES" => Ok(NinResFile::Bfres(Bfres::new(data)?)),
             _ => Err(NinResError::TypeUnknownOrNotImplemented([
-                self[0], self[1], self[2], self[3],
+                data[0], data[1], data[2], data[3],
             ])),
         }
     }
 
     fn into_ninres(self) -> NinResResult {
-        match std::str::from_utf8(&self[..4])? {
+        let decompressed = if b"\x28\xB5\x2F\xFD" == &self[..4] {
+            use std::io::{Cursor, Read};
+            let mut decompressed = vec![];
+            let mut cursor = Cursor::new(self);
+            let mut decoder =
+                ruzstd::StreamingDecoder::new(&mut cursor).map_err(Error::ZstdError)?;
+
+            decoder.read_to_end(&mut decompressed).unwrap();
+            Some(decompressed)
+        } else {
+            None
+        };
+        let data = if let Some(decompressed) = &decompressed {
+            &decompressed[..]
+        } else {
+            self
+        };
+
+        match std::str::from_utf8(&data[..4])? {
             #[cfg(feature = "sarc")]
-            "SARC" => Ok(NinResFile::Sarc(Sarc::new(self)?)),
+            "SARC" => Ok(NinResFile::Sarc(Sarc::new(data)?)),
             #[cfg(feature = "bfres")]
-            "FRES" => Ok(NinResFile::Bfres(Bfres::new(self)?)),
+            "FRES" => Ok(NinResFile::Bfres(Bfres::new(data)?)),
             _ => Err(NinResError::TypeUnknownOrNotImplemented([
-                self[0], self[1], self[2], self[3],
+                data[0], data[1], data[2], data[3],
             ])),
         }
     }
@@ -212,18 +248,47 @@ impl NinRes for &[u8] {
 #[cfg(not(target_arch = "wasm32"))]
 impl NinRes for Vec<u8> {
     fn as_ninres(&self) -> NinResResult {
-        match std::str::from_utf8(&self[..4])? {
+        let decompressed = if b"\x28\xB5\x2F\xFD" == &self[..4] {
+            use std::io::{Cursor, Read};
+            let mut decompressed = vec![];
+            let mut cursor = Cursor::new(self);
+            let mut decoder =
+                ruzstd::StreamingDecoder::new(&mut cursor).map_err(Error::ZstdError)?;
+
+            decoder.read_to_end(&mut decompressed).unwrap();
+            Some(decompressed)
+        } else {
+            None
+        };
+        let data = if let Some(decompressed) = &decompressed {
+            decompressed
+        } else {
+            self
+        };
+
+        match std::str::from_utf8(&data[..4])? {
             #[cfg(feature = "sarc")]
-            "SARC" => Ok(NinResFile::Sarc(Sarc::new(self)?)),
+            "SARC" => Ok(NinResFile::Sarc(Sarc::new(data)?)),
             #[cfg(feature = "bfres")]
-            "FRES" => Ok(NinResFile::Bfres(Bfres::new(self)?)),
+            "FRES" => Ok(NinResFile::Bfres(Bfres::new(data)?)),
             _ => Err(NinResError::TypeUnknownOrNotImplemented([
-                self[0], self[1], self[2], self[3],
+                data[0], data[1], data[2], data[3],
             ])),
         }
     }
 
-    fn into_ninres(self) -> NinResResult {
+    fn into_ninres(mut self) -> NinResResult {
+        if b"\x28\xB5\x2F\xFD" == &self[..4] {
+            use std::io::{Cursor, Read};
+            let mut decompressed = vec![];
+            let mut cursor = Cursor::new(self);
+            let mut decoder =
+                ruzstd::StreamingDecoder::new(&mut cursor).map_err(Error::ZstdError)?;
+
+            decoder.read_to_end(&mut decompressed).unwrap();
+            self = decompressed;
+        }
+
         match std::str::from_utf8(&self[..4])? {
             #[cfg(feature = "sarc")]
             "SARC" => Ok(NinResFile::Sarc(Sarc::new(&self[..])?)),

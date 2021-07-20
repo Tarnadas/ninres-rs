@@ -197,7 +197,6 @@ impl BNTX {
 
                     let size =
                         div_round_up(width, blk_width) * div_round_up(height, blk_height) * bpp;
-                    dbg!(size);
 
                     if pow2_round_up(div_round_up(height, blk_height)) < lines_per_block_height {
                         block_height_shift += 1;
